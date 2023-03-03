@@ -1,0 +1,54 @@
+---
+title: "Fungalite Explore"
+output: html_document
+date: "2023-03-31"
+---
+# Background
+This is the flow cytometry and CFU data from 3/23-3/28. Cg treated with 0-100mM H2O2 are stained with Fungalight 1, run through flow and plated for CFU (details in ELN). Three populations (unstained, live, dead) are gated on Attune and count is exported into an Excel, which is then combined with CFU count and plotted here.
+
+# Import data
+```{r}
+library(tidyverse)
+mydata <- read.table("C:/Users/tangh/Downloads/Fungalight_Gated.tsv", sep="\t", header=TRUE)
+ summary(mydata)
+```
+# Add variables
+```{r}
+mydata$CFU_Survival <- mydata$CFU_MO / mydata$CFU_MM
+mydata$total <- mydata$Unstained + mydata$Live + mydata$Dead
+mydata$Percent_Unstained <- mydata$Unstained / mydata$total
+mydata$Percent_Live <- mydata$Live / mydata$total
+mydata$Percent_Dead <- mydata$Dead / mydata$total
+mydata$Percent_RedPos_Stained <- mydata$Dead / (mydata$Live + mydata$Dead)
+mydata$Percent_GreenPos_Stained <- mydata$Live / (mydata$Live + mydata$Dead)
+mydata$Percent_Red_neg <- (mydata$Live + mydata$Unstained) / mydata$total
+```
+
+# Plotting
+```{r}
+ggplot(mydata, aes(x = Percent_Unstained, y = CFU_Survival, color = Treatment)) +  geom_point ()
+ggplot(mydata, aes(x = Percent_Dead, y = CFU_Survival, color = Treatment)) +  geom_point ()
+ggplot(mydata, aes(x = Percent_Live, y = CFU_Survival, color = Treatment)) +  geom_point ()
+ggplot(mydata, aes(x = Percent_RedPos_Stained, y = CFU_Survival, color = Treatment)) +  geom_point ()
+ggplot(mydata, aes(x = Percent_GreenPos_Stained, y = CFU_Survival, color = Treatment)) +  geom_point ()
+ggplot(mydata, aes(x = Percent_Red_neg, y = CFU_Survival, color = Treatment)) +  geom_point ()
+```
+
+
+> Based on this preliminary analysis, percent unstained and percent live may be good predictors of CFU. The percent live result is consistent with the paper from Dr. Gasch's lab where they gated for live cells. The unstained population is surprisingly also correlating with CFU survival. It may be worth investigating how this population can be used to improve the prediction power.
+
+```{r}
+lm.res <- mydata %>% 
+  filter(!Treatment %in% c("mock", "Mock")) %>%
+  lm(CFU_Survival~Percent_Live, data = .)
+summary(lm.res)
+```
+
+```{r}
+mydata %>% 
+  filter(!Treatment %in% c("mock", "Mock")) %>%
+  ggplot(aes(x = Percent_Live, y = CFU_Survival)) + 
+  geom_point(aes(color = Treatment)) +
+  stat_smooth(method = "lm")
+```
+
