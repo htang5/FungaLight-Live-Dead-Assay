@@ -1,0 +1,70 @@
+---
+title: "FUN1 H2O2 Treated"
+output: html_document
+date: "2023-03-29"
+---
+
+# Background
+This is the flow cytometry data from 12/14/22. Data includes Cg Sc Kl mock, 1mM/0.1mM, and 1M H2O2 treated. The goal is to generate a graph that compares the samples.
+
+### Import data
+```{r}
+## Load libraries
+library(tidyverse)
+library(flowCore)
+library(ggcyto)
+library(cowplot)
+library(ggridges)
+
+
+data.path = "C:/Users/tangh/Downloads/1214H2O2"
+fs <- read.flowSet(path = data.path, pattern = "*.fcs",
+                   transformation = FALSE,  # the original values are already linearized. 
+                   emptyValue = FALSE,  alter.names = TRUE,   # change parameter names to R format
+                   column.pattern = ".H|FSC|SSC") # only load the height variables for the fluorescent parameters
+oriNames <- sampleNames(fs)
+```
+
+### Shorten sample names
+```{r}
+library(PTXQC)
+library(magrittr)
+shortNames <- simplifyNames(oriNames) %>% 
+  gsub(".fcs","",.) %>% gsub(" ", "_", .)
+sampleNames(fs) <- shortNames
+```
+
+### Data wrangling and write to table
+```{r}
+sample <- tibble(file = oriNames, name = shortNames) %>% 
+  separate(name, into = c("species", "group"), sep = "_", remove = FALSE) %>% 
+  mutate(species = recode(species, Cg = "C. glabrata", Kl = "K. lactis", Sc = "S. cerevisiae")) %>% 
+  column_to_rownames(var = "name")
+pData(fs) <- sample
+write.table(sample, file = "20221214-H2O2-Treated.tsv", sep = "\t", row.names = TRUE, quote = FALSE)
+```
+
+
+### Graphing
+```{r}
+p0 <- list(
+  geom_density_ridges(aes(y = name)), 
+  scale_x_flowjo_biexp(),
+  facet_null(),
+  theme_bw(base_size = 12)
+)
+p01 <- list(
+  theme(axis.title.y = element_blank(),
+        axis.text.y = element_blank())
+)
+p1 <- ggcyto(fs, aes(x = FSC.H)) + p0[-2]
+p2 <- ggcyto(fs, aes(x = SSC.H)) + p0 + p01
+p3 <- ggcyto(fs, aes(x = BL1.H)) + p0 + p01
+p4 <- ggcyto(fs, aes(x = BL2.H)) + p0 + p01
+plot_grid(as.ggplot(p1), 
+          #as.ggplot(p2), 
+          as.ggplot(p3), 
+          as.ggplot(p4), 
+          nrow = 1, rel_widths = c(1.5, 1, 1))
+```
+

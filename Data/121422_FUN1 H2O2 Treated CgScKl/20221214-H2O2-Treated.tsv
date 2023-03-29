@@ -1,0 +1,10 @@
+file	species	group
+12..d_Cg_1M	121422_varied H2O2 FUN1_Experiment_Live Dead_Cg 1M.fcs	12..d	Cg
+12..d_Cg_1mM	121422_varied H2O2 FUN1_Experiment_Live Dead_Cg_1mM.fcs	12..d	Cg
+12..d_Cg_mock	121422_varied H2O2 FUN1_Experiment_Live Dead_Cg_mock.fcs	12..d	Cg
+12..d_Kl_0.1mM	121422_varied H2O2 FUN1_Experiment_Live Dead_Kl_0.1mM.fcs	12..d	Kl
+12..d_Kl_1M	121422_varied H2O2 FUN1_Experiment_Live Dead_Kl_1M.fcs	12..d	Kl
+12..d_Kl_mock	121422_varied H2O2 FUN1_Experiment_Live Dead_Kl_mock.fcs	12..d	Kl
+12..d_Sc_0.1mM	121422_varied H2O2 FUN1_Experiment_Live Dead_Sc_0.1mM.fcs	12..d	Sc
+12..d_Sc_1M	121422_varied H2O2 FUN1_Experiment_Live Dead_Sc_1M.fcs	12..d	Sc
+12..d_Sc_mock	121422_varied H2O2 FUN1_Experiment_Live Dead_Sc_mock.fcs	12..d	Sc
