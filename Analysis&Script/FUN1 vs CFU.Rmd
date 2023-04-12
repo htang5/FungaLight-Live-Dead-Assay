@@ -1,0 +1,48 @@
+---
+title: "Make CFU + FUN1 Plot"
+output: html_document
+date: "2023-04-08"
+---
+# Background
+This is the flow cytometry data from 02/24/23. Data includes Cg treated with various [H2O2], and corresponding CFU data. The goal is to generate a graph with mean fluorescence on x-axis and CFU survival on y-axis.
+
+### Import data
+```{r}
+## Load libraries
+library(tidyverse)
+library(flowCore)
+
+
+data.path = "C:/Users/tangh/Downloads/0224RG"
+fs <- read.flowSet(path = data.path, pattern = "*.fcs",
+                   transformation = FALSE,  # the original values are already linearized. 
+                   emptyValue = FALSE,  alter.names = TRUE,   # change parameter names to R format
+                   column.pattern = ".H|FSC|SSC") # only load the height variables for the fluorescent parameters
+```
+
+### Write Data into table
+```{r}
+summary_table <- as.data.frame(summary(fs))
+transposed_table <- t(summary_table)
+write.csv(transposed_table, "H2O2fs.csv", row.names = TRUE)
+```
+
+>Some data cleaning and CFU data attachement is done in Excel due to the fact that CFU count data is stored in the Excel format.
+
+### Plotting
+```{r}
+MeanFL <- read.csv("C:/Users/tangh/Downloads/FUN1H2O2_Cleaned.csv")
+MeanFL
+ggplot(MeanFL, aes(x = FUN1.Green_Mean, y = CFU_Survival)) +  geom_point ()
+ggplot(MeanFL, aes(x = FUN1.Red_Mean, y = CFU_Survival)) +  geom_point ()
+```
+
+
+
+
+
+
+
+
+
+
