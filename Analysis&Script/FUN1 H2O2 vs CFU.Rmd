@@ -12,7 +12,6 @@ This is the flow cytometry data from 02/24/23. Data includes Cg treated with var
 library(tidyverse)
 library(flowCore)
 
-
 data.path = "C:/Users/tangh/Downloads/0224RG"
 fs <- read.flowSet(path = data.path, pattern = "*.fcs",
                    transformation = FALSE,  # the original values are already linearized. 
@@ -31,10 +30,19 @@ write.csv(transposed_table, "H2O2fs.csv", row.names = TRUE)
 
 ### Plotting
 ```{r}
-MeanFL <- read.csv("C:/Users/tangh/Downloads/FUN1H2O2_Cleaned.csv")
+MeanFL <- read.csv("C:/Users/tangh/Downloads/FUN1H2O2+CFU_Cleaned.csv")
 MeanFL
-ggplot(MeanFL, aes(x = FUN1.Green_Mean, y = CFU_Survival)) +  geom_point ()
-ggplot(MeanFL, aes(x = FUN1.Red_Mean, y = CFU_Survival)) +  geom_point ()
+ggplot(MeanFL, aes(x = FUN1.Green_Mean, y = CFU_Survival)) +  geom_point () + annotate("text", x = 20000, y = 1.2, label = "Adjusted R-squared = -0.05779",
+           size = 5, hjust = 0, vjust = 0)
+ggplot(MeanFL, aes(x = FUN1.Red_Mean, y = CFU_Survival)) +  geom_point ()+ annotate("text", x = 7000, y = 1.2, label = "Adjusted R-squared = -0.05597",
+           size = 5, hjust = 0, vjust = 0)
+```
+### Statistics
+```{r}
+lm.res1 <- lm(CFU_Survival~FUN1.Green_Mean, data = MeanFL)
+lm.res2 <- lm(CFU_Survival~FUN1.Red_Mean, data = MeanFL)
+summary(lm.res1)
+summary(lm.res2)
 ```
 
 

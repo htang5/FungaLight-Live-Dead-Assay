@@ -11,14 +11,6 @@ My project aims to develop a flow cytometry based high-throughput viability assa
 
 In this bioinformatics course project, I hope to build a pipeline for processing and analyzing flow cytometry based FCS data and use R to construct informative figures that help in evaluating the results. FCS stands for Flow Cytometry Standard, and it provides a standard format for flow cytometer output across different machine brands and models. FCS is a binary file with three major segments. A header segment records instrument settings and keywords, a data segment, and an analysis segment. The data segment contains all recorded parameters for each event in flow cytometry.
 
-## Figure
-![Figure 1](/space/htang5/Documents/FUN1_data_analysis/goal_figure.png)
-Figure 1. Ridges plot for flow cytometry results in post-oxidative stress yeast cells. Intensity of the FSC, BLH1, and BLH2 channels are recorded. FUN-1 fluorescence level appears to be significantly altered after 5M and 1M H2O2 treatments.
-
-An example of the figure I want to generate is the ridge plot. This figure has species and experimental conditions on the y-axis. The intensity of flow cytometer channels are on the x-axis. The figure shows low FUN-1 fluorescence in mock treated cells, high fluorescence in stock concentration [H2O2] treated cells, and some potential shifts in the intermediate [H2O2] conditions. Using this figure, I hope to compare fluorescence level of FUN-1 stained post-oxidative stress cells, and eventually decide if FUN-1 is useful for reliability accessing viability. 
-
-This figure effectively compares the fluorescence intensity of each sample. With the overlayed ridges, the comparison between each sample is easy and even slight shifts in intensity can be spotted. From this plot, it can be concluded that mock treated (thus mostly live) Cg cells display low fluorescence intesnity in both the green and red channels. Heated and 5M H2O2 treated (thus dead) cells have high fluorescent intensity in both channels. While the intermediate conditions' fluorescent intensity seems to differ, no conclusion can be drawn yet. This figure is a representation of the type of figure I hope to produce with my data. I do not intend to reproduce this figure with its oringinal data. I hope to plot my data in this form and thus achieve my goal of comparing fluorescence level of different treatment and also potentially compare utility of different viability stains.
-
 ## Materials and Methods
 **Data**
 Data for analysis is obtained through my own experimental work. The data is stored on the lab RDSS drive. I have copied and pasted the data folder through the GUI. The folder is titled with experiment date and each FCS file is labeled with experimental conditions. These labels were generated during the experiment. If you would like to recieve a copy of the data, please contact me at hanxi-tang@uiowa.edu.
@@ -34,27 +26,57 @@ When graphing the Fungalite data, a percent variable was generated for each cell
 
 *Statistical Analysis* After previous graphing, Fungalite appeared to have superior distinguishing power in predicting CFU survival results. Therefore, data analysis was focused on Fungalite results. Outliers due to documented technical errors or arbituary settings are filtered out of analysis. The linear regression model function was used to build a model where Y is the CFU survival rate and X is the percent gated for each population. The predcited linear regression line is then added onto the scatter plot. The next step in statistical analysis would be to add multiple variables to the model in order to increase the predicting power.
 
-## Result
-**FUN-1 Graphing**
+## Results and Discussion
+**Figure 1**
 
-![Figure 2A](/space/htang5/Documents/FUN1_data_analysis/biol-4386-course-project-htang5/Output/FUN1RG.png)
-![Figure 2B](/space/htang5/Documents/FUN1_data_analysis/biol-4386-course-project-htang5/Output/FUN1LP.png)
-Figure 2. Ridges plots for flow cytometry of FUN1 stained post-oxidative stress C. glabrata cells. A. Intensity of FSC, FUN1 Green and FUN1 Red channels in C. glabrata at 0 hour post treatment and 24 hour post treatment. B. Intensity of the FSC and long pass channel in post-oxidative stress C. glabrata at 0 hour and 24 hour post treatment.
+![Figure 1](/space/htang5/Documents/FUN1_data_analysis/biol-4386-course-project-htang5/Output/Final_Figure.jpg)
 
-C. glabrata experiencing various oxidative stress levels were plotted on the same scale (Figure 2). Yeast experiencing severe oxidative stress (1M and 5M H2O2) display bright red and green fluoresnce. Yeasts treated with lower oxidative stress (10mM, 1mM H2O2) display low red and green fluorescence, and appears similar to the mock treated cells. The 100mM H2O2 treated cells appear to have a shifted red and green fluorescence, however, the shift is minimal and disappears after 24 hour incubation. The seperate red and green filter setting (Figure 2A) and the long pass filter setting (Figure 2B) display consistent fluorescence patterns.
+Figure 1. Analysis of flow cytometry results from yeast samples stained with viability dyes. (A) Ridges plots for flow cytometry of FUN-1 stained post heat stress yeasts. Sample names
+indicating yeast species and treatment conditions are shown on the vertical axis. Intensity of FSC, FUN-1 Green and FUN-1 Red channels are plotted on the horizontal axis. (B) Ridges
+plots for flow cytometry of FUN-1 stained post-oxidative stress yeasts. Sample names indicating yeast species and treatment conditions are shown on the vertical axis. Intensity of FSC, FUN-1
+Green and FUN-1 Red channels are plotted on the horizontal axis. (C) Scatter plot of FUN-1 stained post-oxidative stress C. glabrata cells’ mean green fluorescence and CFU survival rate.
+Adjusted R-squared value is shown. (D) Scatter plot of FUN-1 stained post-oxidative stress C. glabrata cells’ mean red fluorescence and CFU survival rate. Adjusted R-squared value is
+shown. (E) Scatter plot of FungaLight stained post-oxidative stress C. glabrata. The flow cytometry result was gated by population. Percentage of live population is plotted against CFU
+survival rate. The line of best fit (blue) from a linear regression model and its 95% confidence intervals (shades) are also graphed. Adjusted R2 and p-value are shown. Colors depict various treatment conditions.
 
-**Fungalite Graphing**
+This project aims to develop a flow cytometry based high throughput yeast viability assay and verify its accuracy against the gold standard CFU assay, and thereby provide a
+method to potentially quantify the magnitude of ASR trait in various species. The initial approach to this method development utilized the FUN-1 vitality dye. FUN-1
+distinguishes live and severe heat killed yeast cells in C. glabrata, S. cerevisiae, and K. lactis (Fig. 1A). Mock treated cells show a spectrum of low fluorescence signals in both the FUN-1
+green (0~103) and the FUN-1 red channels (0~102). Heat killed cells show high intensity fluorescence in the green (above 103) and red channels (above 102). The live and dead cell
+fluorescence patterns are distinct from each other. In this staining process, live cells were stained with the dye and actively transported the dye to form CVIS structure in its vacuole. Heat
+killed cells are unable to actively transport and metabolize FUN-1. Therefore, FUN-1 diffused into heat killed cells are accumulating and emits bright green and red fluorescence. It is clear
+that FUN-1 is capable of distinguishing live and heat killed yeasts in flow cytometry. FUN-1 is also capable of distinguishing live and severe hydrogen peroxide treated cells
+in C. glabrata, S. cerevisiae, and K. lactis (Fig. 1B). Mock treated cells gave low signals in both the red and green channels. Yeasts treated with severe oxidative stress (1M H 2O2) show high
+intensity fluorescence in the green (above 103) and red channels (above 102). However, in yeasts treated with mild oxidative stress (0.1mM-1mM H2O2), the staining pattern is similar to
+mock treated cells. Severe oxidative stress is known to immediately kill yeasts. Yeasts treated with a high concentration of H2O2 will become immediately metabolically inactive, and passively
+accumulate FUN-1 dye. In mild oxidative stress treated conditions, the reactive oxygen species level remain low and do not cause threat to survival. The yeasts remain metabolically active in
+these mild treatment conditions, and actively metabolize FUN-1 to give low florescence in both channels. These data indicates that FUN-1 is capable of distinguishing live and severe oxidative
+stress treated yeasts.
 
-![Figure 3](/space/htang5/Documents/FUN1_data_analysis/biol-4386-course-project-htang5/Output/Fungalite.png)
- Figure 3. Scatter plot dipicting variation in percent live and CFU survival rate. The line of best fit (blue) from a linear regression model and its 95% confidence intervals (shades) are also graphed.
+FUN-1’s post-oxidative stress survival prediction power was compared to the traditional CFU assays. C. glabrata was exposed to a range of various oxidative stress (0-1M H2O2), then
+stained with FUN-1 and also plated for CFU. The mean fluorescence signals is then plotted against CFU survival rate (Fig. 1C, Fig.1D). The mean green fluorescence level is clustered
+around 0-5000 for a varied range (0%-100%) of CFU survival rates. The mean red fluorescence level is clustered around 0-1000 for a varied range (0%-100%) of CFU survival rates. The
+adjusted R2 values are all around 5% for both correlations. These results suggest that FUN-1 staining is not as sensitive as CFU in assessing post-oxidative stress survival. FUN-1 cannot
+distinguish intermediate levels of post-oxidative stress survival.
 
-C. glabrata treated with various oxidative stress levles were stained with Fungalite and ran through flow cytometry. The live cell population (cells with high green and low red fluorescence) is gated and its percentage is plotted against CFU survival rate. Low oxidative stress levels resulted in high live population percentage. High live population percentage is correlated with high CFU survival rate. The plot and the linear regression model shows that the percent live is highly correlated with CFU survival rate. The r-squared value of the regression is 0.86, with a p-value of 1.83e-8. 
+A yeasts cell death assessment dye, FungaLight, was then used to develop the flow cytometry assay (Fig. 1E). In this approach, C. glabrata was exposed to a range of various
+oxidative stress (0-1M H2O2), then stained with FungaLight and also plated for CFU. In intermediate H2O2 treated conditions, FungaLight stained cells separate into clear live and
+dead populations with distinct staining patterns (graph not shown here, FCS files available in repository). The live cell population was gated based on staining patterns of mock treated cells.
+The percentages of live cells correlate strongly with CFU survival rates in various post-oxidative stress conditions. With an adjusted R2 value of 86%, FungaLight flow cytometry data can be
+used as a good predictor of CFU survival rate.Comparing the two dyes, FungaLight is a superior option for developing this flow
+cytometry based viability assay. Even though FungaLight as been used as a method of verification in previous papers, a pure flow cytometry based viability have not been established.
+This project aims at developing such assay and verifying its prediction power against the CFU assays.
 
-## Discussion
-Overall, the findings are consistent with the paper in the reference. Fungalite is a superior viability dye and it can predict CFU survival rate at 0 hour post treatment. However, the correlation r-sqaure value can be further improved. Specifically, the current dataset used for analysis has various technical flaws. If a more carefully collected dataset can be applied, the correlation may be higher. In addition, the unstained population in these samples are worth investigating. A model accounting for the unstained population may better predict CFU survival rate.
+Even though the current data showed FungaLight’s prediction power in post-oxidative stress C. glabrata, FungaLight’s usage in other yeasts species have not yet been explored. A
+plausible next step is to establish FungaLight’s usage in other yeasts, and verify its prediction power against CFU survival results. In addition, FungaLight’s prediction power may be further
+improved by using an alternative survival assessment timepoint. Yeasts membrane integrity is further compromised at 24 hour post oxidative stress treatment. Therefore, an incubation may
+help in improving FungaLight’s accuracy and sensitivity. However, the incubation timepoints and incubation media need to be carefully chosen.
 
 ## Reference
 David B. Berry,Qiaoning Guan,James Hose,Suraiya Haroon,Marinella Gebbia,Lawrence E. Heisler,Corey Nislow,Guri Giaever,Audrey P. Gasch. “Multiple Means to the Same End: The Genetic Basis of Acquired Stress Resistance in Yeast.” PLOS Genetics, November 10, 2011
 https://doi.org/10.1371/journal.pgen.1002353
+
+Rego, A., Ribeiro, A., Côrte-Real, M. et al. “Monitoring yeast regulated cell death: trespassing the point of no return to loss of plasma membrane integrity.” Apoptosis, July 07,
+2022. https://doi.org/10.1007/s10495-022-01748-7
 
 
