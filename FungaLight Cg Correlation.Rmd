@@ -1,0 +1,269 @@
+---
+title: "FungaLight Cg Correlation"
+output: html_document
+date: "2023-06-15"
+---
+
+# Background
+This is the flow cytometry and CFU data for Cg, Sc, Kl. Cg, Sc, Kl treated with 0-1M H2O2 are stained with Fungalight 1, run through flow and plated for CFU (details in ELN). Goal is to correlate Flow vs CFU and generate graphs for figure 3.
+
+```{r setup, message=FALSE}
+require(tidyverse)
+require(flowCore)
+require(flowClust)
+require(openCyto)
+require(ggcyto)
+require(cowplot)
+```
+
+# Import data
+```{r}
+data.path = "/space/htang5/Documents/Fungalight Flow+CFU_Cg/Raw Data"
+fs <- read.flowSet(path = data.path, transformation = FALSE,  # the original values are already linearized. 
+                   emptyValue = FALSE,  alter.names = TRUE,   # change parameter names to R format
+                   column.pattern = ".H|FSC|SSC") # only load the height variables for the fluorescent parameters
+summary(fs)
+```
+
+Simplify the sample names
+
+```{r}
+require(PTXQC)
+oriNames <- sampleNames(fs)
+shortNames <- simplifyNames(oriNames) %>% 
+  gsub(".fcs","",.)
+sampleNames(fs) <- shortNames
+```
+
+# Gatting
+```{r}
+outlier.gate <- rectangleGate(filterId = "-outlier", "FSC.H" = c(1.2e5, 1e6), "SSC.H" = c(1e2, 1e6))
+ggcyto(fs, aes(x = FSC.H, y = SSC.H), subset = "root") +
+  geom_hex(bins = 64) + geom_gate(outlier.gate) + facet_wrap(~name, ncol = 2)# + ggcyto_par_set(limits = "instrument")
+```
+> Most events in all samples fell within this outlier/instrument gate.
+
+Add this gate to the GatingSet
+
+```{r}
+gs <- GatingSet(fs) # create a GatingSet
+gs_pop_add(gs, outlier.gate, parent = "root")
+recompute(gs)
+```
+
+Let's examine how this gate intersected with the FSC.H vs FSC.W plot (for singlets)
+
+```{r}
+p1 <- ggcyto(gs[[1]], aes(x = FSC.H, y = FSC.W), subset = "root") + geom_hex(bins = 128)
+p2 <- ggcyto(gs[[1]], aes(x = FSC.H, y = FSC.W), subset = "-outlier") + geom_hex(bins = 128)
+plot_grid(as.ggplot(p1), as.ggplot(p2), ncol = 2)
+
+```
+Gate for singlets
+```{r fig.width=4, fig.height=4}
+scPars <- ggcyto_par_set(limits = list(x = c(0,1e6), y = c(30,300)))
+ex <- Subset(fs[[1]], outlier.gate)
+#singlet.gate <- gate_flowclust_2d(ex, "FSC.H", "FSC.W", filterId = "singlet", K = 2, quantile = 0.8)
+# switch to a polygongate
+polygon <- matrix(c(1e5, 1e5, 1e6, 1e6, 60, 75, 135,60), ncol = 2)
+colnames(polygon) <- c("FSC.H", "FSC.W")
+singlet.gate <- polygonGate(filterId = "singlet", boundaries = polygon)
+ggcyto(ex, aes(x = FSC.H, y = FSC.W)) + geom_hex(bins = 128) + geom_gate(singlet.gate) + geom_stats() + scPars
+```
+
+Add this gate to the gatingSet
+
+```{r eval=FALSE, include=FALSE}
+gs_pop_add(gs, singlet.gate, parent = "-outlier", name = "singlet")
+recompute(gs)
+```
+
+Visualize the data
+```{r}
+ggcyto(gs[sample(shortNames,8)], aes(x = BL1.H, y = BL3.H), subset = "-outlier") + geom_hex(bins = 64) +
+  facet_wrap(~name, ncol = 4) + scale_x_logicle() + scale_y_logicle() + theme_bw()
+```
+# Gate for Dead population
+> Dead population is defined based on 1M treated sample.
+
+```{r fig.width=4, fig.height=4}
+scPars <- ggcyto_par_set(limits = list(x = c(0,1e6), y = c(0,1e6)))
+ex <- Subset(fs[[9]], singlet.gate)
+polygon <- matrix(c(1e2, 10^2.2, 10^3.1, 10^3.1, 10^2.9, 10^2.4,
+                    10^3.2, 10^3.5, 1e4, 10^3.4, 10^3, 10^2.6), ncol = 2)
+colnames(polygon) <- c("BL1.H", "BL3.H")
+dead.gate <- polygonGate(filterId = "dead", boundaries = polygon)
+ggcyto(ex, aes(x = BL1.H, y = BL3.H)) + geom_hex(bins = 128) + geom_gate(dead.gate) + geom_stats() + scPars + scale_x_logicle() + scale_y_logicle() 
+```
+Add this gate to the gatingSet
+
+```{r eval=FALSE, include=FALSE}
+gs_pop_add(gs, dead.gate, parent = "singlet", name = "dead")
+recompute(gs)
+```
+
+# Gate for Live population
+> live population is gated based on the mock treated sample
+
+```{r fig.width=4, fig.height=4}
+scPars <- ggcyto_par_set(limits = list(x = c(0,1e6), y = c(0,1e6)))
+ex <- Subset(fs[[14]], singlet.gate)
+polygon1 <- matrix(c(1e2, 1e2, 10^2.5, 10^3.95, 1e3, 
+                    0, 1e2, 10^2.1, 10^2.95, 0), ncol = 2)
+colnames(polygon1) <- c("BL1.H", "BL3.H")
+live.gate <- polygonGate(filterId = "live", boundaries = polygon1)
+ggcyto(ex, aes(x = BL1.H, y = BL3.H)) + geom_hex(bins = 128) + geom_gate(live.gate) + geom_stats() + scPars + scale_x_logicle() + scale_y_logicle() 
+```
+Add this gate to the gatingSet
+
+```{r eval=FALSE, include=FALSE}
+gs_pop_add(gs, live.gate, parent = "singlet", name = "live")
+recompute(gs)
+```
+
+# Gate for Unstained population
+> Unstained population is defined as population below 10^2 in both channels (in the noise range).
+
+```{r fig.width=4, fig.height=4}
+scPars <- ggcyto_par_set(limits = list(x = c(0,1e6), y = c(0,1e6)))
+ex <- Subset(fs[[7]], singlet.gate)
+polygon2 <- matrix(c(0, 1e2, 1e2, 0,
+                    0, 0, 1e2, 1e2), ncol = 2)
+colnames(polygon2) <- c("BL1.H", "BL3.H")
+unstained.gate <- polygonGate(filterId = "unstained", boundaries = polygon2)
+ggcyto(ex, aes(x = BL1.H, y = BL3.H)) + geom_hex(bins = 128) + geom_gate(unstained.gate) + geom_stats() + scPars + scale_x_logicle() + scale_y_logicle() 
+```
+Add this gate to the gatingSet
+
+```{r eval=FALSE, include=FALSE}
+gs_pop_add(gs, unstained.gate, parent = "singlet", name = "unstained")
+recompute(gs)
+```
+
+# Gate for stained population
+> stained population is defined based populatio  above 10^2 in both channels.
+
+```{r fig.width=4, fig.height=4}
+scPars <- ggcyto_par_set(limits = list(x = c(0,1e6), y = c(0,1e6)))
+ex <- Subset(fs[[7]], singlet.gate)
+polygon3 <- matrix(c(1e2, 1e6, 1e6, 1e2,
+                    0, 0, 1e6, 1e6), ncol = 2)
+colnames(polygon3) <- c("BL1.H", "BL3.H")
+stained.gate <- polygonGate(filterId = "stained", boundaries = polygon3)
+ggcyto(ex, aes(x = BL1.H, y = BL3.H)) + geom_hex(bins = 128) + geom_gate(stained.gate) + geom_stats() + scPars + scale_x_logicle() + scale_y_logicle() 
+```
+
+Add this gate to the gatingSet
+
+```{r eval=FALSE, include=FALSE}
+gs_pop_add(gs, stained.gate, parent = "singlet", name = "stained")
+recompute(gs)
+```
+
+
+# Gate for red positive population
+> Red population is defined as red positive events in the stained population. It's gated based on the 1M treated population
+
+```{r fig.width=4, fig.height=4}
+scPars <- ggcyto_par_set(limits = list(x = c(0,1e6), y = c(0,1e6)))
+ex <- Subset(fs[[16]], stained.gate)
+polygon4 <- matrix(c(1e2, 1e6, 1e6, 1e2,
+                    10^2.5, 10^2.5, 1e6, 1e6), ncol = 2)
+colnames(polygon4) <- c("BL1.H", "BL3.H")
+RP.gate <- polygonGate(filterId = "RP", boundaries = polygon4)
+ggcyto(ex, aes(x = BL1.H, y = BL3.H)) + geom_hex(bins = 128) + geom_gate(RP.gate) + geom_stats() + scPars + scale_x_logicle() + scale_y_logicle() 
+```
+Add this gate to the gatingSet
+
+```{r eval=FALSE, include=FALSE}
+gs_pop_add(gs, RP.gate, parent = "stained", name = "Red_Positive")
+recompute(gs)
+```
+
+
+# Extract event counts, write into tibble, export into csv
+
+```{r}
+stats <- gs_pop_get_stats(gs) %>% 
+  as_tibble()%>% 
+  mutate(pop = gsub(".*/", "", pop), pop = gsub("-outlier", "cells", pop)) %>% 
+  pivot_wider(names_from = pop, names_prefix = "n_", values_from = count)
+print(stats)
+saving_path <- file.path("~/Downloads", "cg_flow.csv")
+write_csv(stats, saving_path)
+```
+
+> CFU data is manually attached to the csv, and the csv is filtered and re-imported as a csv below
+
+# Re-import data, add variables, plot
+
+```{r}
+mydata <- read.table("/space/htang5/Downloads/cg_flow_CFU.csv", sep=",", header=TRUE)
+mydata$CFU_Survival <- mydata$CFU_Live / mydata$CFU_Total
+mydata$Percent_Live <- mydata$n_live / mydata$n_singlet
+mydata$Percent_Dead <- mydata$n_dead / mydata$n_singlet
+mydata$Percent_Unstained <- mydata$n_unstained / mydata$n_singlet
+mydata$Percent_RedPos_Stained <- mydata$n_Red_Positive / mydata$n_stained
+mydata$Percent_Red_neg <- 1- (mydata$n_Red_Positive / mydata$n_stained)
+
+ggplot(mydata, aes(x = Percent_Live, y = CFU_Survival)) + 
+  geom_point()
+ggplot(mydata, aes(x = Percent_Unstained, y = CFU_Survival)) +  geom_point ()
+ggplot(mydata, aes(x = Percent_Dead, y = CFU_Survival)) +  geom_point ()
+ggplot(mydata, aes(x = Percent_RedPos_Stained, y = CFU_Survival)) +  geom_point ()
+ggplot(mydata, aes(x = Percent_Red_neg, y = CFU_Survival)) +  geom_point ()
+
+```
+
+# Calculate R^2 for each correlation
+```{r}
+sample <- c(sample)
+
+lm.res <- mydata %>%
+  as.data.frame() %>%
+  lm(CFU_Survival ~ Percent_Live, data = .)  
+
+summary(lm.res)
+
+lm.res2 <- mydata %>%
+  as.data.frame() %>%
+  lm(CFU_Survival ~ Percent_Dead, data = .)  
+
+summary(lm.res2)
+
+lm.res3 <- mydata %>%
+  as.data.frame() %>%
+  lm(CFU_Survival ~ Percent_RedPos_Stained, data = .)  
+
+summary(lm.res3)
+
+lm.res4 <- mydata %>%
+  as.data.frame() %>%
+  lm(CFU_Survival ~ Percent_Red_neg, data = .)  
+
+summary(lm.res4)
+```
+
+
+```{r}
+mydata_filtered %>% ggplot(aes(x = Percent_Live, y = CFU_Survival)) + geom_point()+
+  stat_smooth(method = "lm")
+```
+```{r}
+ggplot(mydata_filtered, aes(x = Percent_Dead, y = CFU_Survival)) + 
+  geom_point()+ scale_y_sqrt()
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
