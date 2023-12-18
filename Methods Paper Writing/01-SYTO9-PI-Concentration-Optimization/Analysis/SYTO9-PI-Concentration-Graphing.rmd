@@ -1,0 +1,101 @@
+---
+title: "SYTO9-PI-Concentration-Graphing"
+output: html_document
+date: "2023-12-18"
+---
+
+# Background
+This is the flow cytometry data for Cg treated with 0-1M H2O2 are stained with various concentrations of SYTO9 or PI alone, and run through flow cytometry (details in ELN). Goal is to explore dye concentration in various survival rate of Cg.
+
+```{r setup, message=FALSE}
+require(tidyverse)
+require(flowCore)
+require(flowClust)
+require(openCyto)
+require(ggcyto)
+require(cowplot)
+require(ggrdiges)
+```
+
+# Import data
+```{r}
+data.path = "/space/htang5/Documents/FUN1_data_analysis/biol-4386-course-project-htang5/Methods Paper Writing/01-SYTO9-PI-Concentration-Optimization/Input/SYTO9-Dilutions-Raw"
+fs <- read.flowSet(path = data.path, transformation = FALSE,  # the original values are already linearized. 
+                   emptyValue = FALSE,  alter.names = TRUE,   # change parameter names to R format
+                   column.pattern = ".H|FSC|SSC") # only load the height variables for the fluorescent parameters
+```
+
+Simplify the sample names
+
+```{r}
+require(PTXQC)
+oriNames <- sampleNames(fs)
+tmp <- str_split(oriNames, pattern = "[ _]+", simplify = TRUE)[,c(1, 5, 6, 7)] 
+colnames(tmp) <- c("Date", "Treatment", "Dilution", "Dye") 
+sample <- data.frame(tmp) %>% 
+  mutate(`Dye` = ifelse(`Dye` == "p.fcs", "PI", ifelse(`Dye` == "", "SYTO9", `Dye`)), Dilution = gsub(".fcs", "", Dilution))
+rownames(sample) <- oriNames
+pData(fs) <- sample
+print(pData(fs))
+```
+```
+
+# Visualize dataset
+```{r}
+sub <- fs[pData(fs)$Dye == "PI" & pData(fs)$Date == "112023" & pData(fs)$Treatment == "0"]
+p1 <- ggcyto(sub, aes(x = "BL1.H", y = "BL3.H")) + geom_hex(bins = 80) + 
+  facet_wrap(~Dilution, labeller = "label_both") + theme_minimal()
+p1 + scale_x_logicle() + scale_y_logicle()
+```
+
+
+# Extract MFI for BL1.H across all flowFrames
+```{r}
+```{r}
+library(flowCore)
+tmp <- fsApply(fs, each_col, median)
+combined_data <- cbind(pData(fs), tmp)
+pData(fs) <- combined_data
+print(pData(fs))
+```
+
+# Graph Green MFIs against teatment and graoup by dye concentration
+>10mM treated group was omitted due to its high variation.
+
+```{r}
+pData(fs) %>%
+  dplyr::filter(Dye == "SYTO9") %>% 
+  dplyr::filter(Treatment != "10") %>%
+  mutate(Treatment = factor(Treatment, levels = c("0", "100","1000")))  %>%
+  ggplot(aes(x = Treatment, y = BL1.H)) +
+  geom_point(aes(color = Dilution)) +
+  stat_summary(fun.data = "mean_cl_boot", geom = "line", size = 0.2, position = position_nudge(x = 0.1), aes(group = Dilution, color = Dilution)) +
+  labs(x = "Hydrogen Peroxide Treatment", y = "Median Green Fluorescence") +
+  panel_border(color = "black", size = 1.5) +
+  theme(axis.line = element_blank(),
+        #axis.title.x = element_blank(), 
+        strip.background = element_blank(),
+        axis.text.x = element_text(size = 16, face = "bold"),  # Adjust size and face (bold)
+        axis.text.y = element_text(size = 16, face = "bold"),
+        axis.title.x = element_text(size = 16, face = "bold"),
+        axis.title.y = element_text(size = 16, face = "bold")
+        )
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
