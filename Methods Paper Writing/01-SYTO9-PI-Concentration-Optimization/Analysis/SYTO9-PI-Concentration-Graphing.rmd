@@ -18,8 +18,15 @@ require(ggrdiges)
 ```
 
 # Import data
+> I suggest NOT committing FCS files into the git repository, as they
+could take up a lot of space cumulatively. Instead, I usually list the location
+the data are stored in, such as RDSS/Users/Hanxi/xxx. In the Rmarkdown, I would
+read them in, gate the data, and export the CSV file, which I commit to the repository.
+> Bin
+
 ```{r}
-data.path = "/space/htang5/Documents/FUN1_data_analysis/biol-4386-course-project-htang5/Methods Paper Writing/01-SYTO9-PI-Concentration-Optimization/Input/SYTO9-Dilutions-Raw"
+# use relative path to make it easier for collaboration
+data.path = "../Input/SYTO9-Dilutions-Raw"
 fs <- read.flowSet(path = data.path, transformation = FALSE,  # the original values are already linearized. 
                    emptyValue = FALSE,  alter.names = TRUE,   # change parameter names to R format
                    column.pattern = ".H|FSC|SSC") # only load the height variables for the fluorescent parameters
@@ -33,14 +40,16 @@ oriNames <- sampleNames(fs)
 tmp <- str_split(oriNames, pattern = "[ _]+", simplify = TRUE)[,c(1, 5, 6, 7)] 
 colnames(tmp) <- c("Date", "Treatment", "Dilution", "Dye") 
 sample <- data.frame(tmp) %>% 
-  mutate(`Dye` = ifelse(`Dye` == "p.fcs", "PI", ifelse(`Dye` == "", "SYTO9", `Dye`)), Dilution = gsub(".fcs", "", Dilution))
+  mutate(Dye = ifelse(Dye == "p.fcs", "PI", "SYTO9"), 
+         Dilution = gsub(".fcs", "", Dilution) %>% as.integer(),
+         Treatment = factor(Treatment, levels = as.character(c(0, 10, 100, 1000))))
 rownames(sample) <- oriNames
 pData(fs) <- sample
 print(pData(fs))
 ```
-```
 
 # Visualize dataset
+
 ```{r}
 sub <- fs[pData(fs)$Dye == "PI" & pData(fs)$Date == "112023" & pData(fs)$Treatment == "0"]
 p1 <- ggcyto(sub, aes(x = "BL1.H", y = "BL3.H")) + geom_hex(bins = 80) + 
@@ -48,22 +57,36 @@ p1 <- ggcyto(sub, aes(x = "BL1.H", y = "BL3.H")) + geom_hex(bins = 80) +
 p1 + scale_x_logicle() + scale_y_logicle()
 ```
 
+```{r}
+sub <- fs[pData(fs)$Dye == "SYTO9" & pData(fs)$Date == "112023"]
+p2 <- sub %>% 
+  ggcyto(aes(x = "BL1.H", y = "BL3.H")) + 
+  geom_hex(bins = 80) + 
+  facet_grid(Dilution ~ Treatment, labeller = "label_both") + 
+  theme_minimal()
+p2 + scale_x_logicle() + scale_y_logicle()
+```
 
 # Extract MFI for BL1.H across all flowFrames
 ```{r}
-```{r}
-library(flowCore)
 tmp <- fsApply(fs, each_col, median)
-combined_data <- cbind(pData(fs), tmp)
-pData(fs) <- combined_data
-print(pData(fs))
+if(all(rownames(tmp) == rownames(sample))){
+  combined_data <- cbind(pData(fs), tmp) %>% 
+    as.tibble() %>% relocate(name, .after = last_col())
+}
+# I don't recommend assigning the combined_data to the phenoData slot of the
+# fs object. this is not necessary and makes the phenoData slot complicated
+# instead, just work with the combined_data object you created
+#pData(fs) <- combined_data
+#print(pData(fs))
+print(combined_data)
 ```
 
 # Graph Green MFIs against teatment and graoup by dye concentration
 >10mM treated group was omitted due to its high variation.
 
 ```{r}
-pData(fs) %>%
+combined_data %>%
   dplyr::filter(Dye == "SYTO9") %>% 
   dplyr::filter(Treatment != "10") %>%
   mutate(Treatment = factor(Treatment, levels = c("0", "100","1000")))  %>%
