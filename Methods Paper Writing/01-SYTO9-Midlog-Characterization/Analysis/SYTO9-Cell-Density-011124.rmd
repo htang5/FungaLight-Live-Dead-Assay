@@ -1,0 +1,104 @@
+---
+title: "SYTO9-Cell-Density"
+output: html_document
+date: "2023-12-21"
+---
+# Background
+This is the flow cytometry mock treated Cg stained with 1000x dilution of SYTO9 in 0.01-1OD cell density and run through flow (details in HT's ELN). Goal is to show SYTO9's fluorescence intensity change with cell density.
+
+```{r setup, message=FALSE}
+require(tidyverse)
+require(flowCore)
+require(flowClust)
+require(openCyto)
+require(ggcyto)
+require(cowplot)
+```
+
+# Import data
+> FCS files are stored in RDSS/user/flow cytometry, FCS is read and write into an input tsv table. The tsv file is avaliable from the Input folder.
+
+```{r}
+data.path = "/space/htang5/Documents/122123_Cell Density/Raw"
+dat.f1d <- read.flowSet(path = data.path, transformation = FALSE,  # the original values are already linearized. 
+                   emptyValue = FALSE,  alter.names = TRUE,   # change parameter names to R format
+                   column.pattern = ".H|FSC|SSC") # only load the height variables for the fluorescent parameters
+```
+
+Simplify the sample names
+
+```{r}
+require(PTXQC)
+oriNames <- sampleNames(dat.f1d)
+tmp <- str_split(oriNames, pattern = "[ _]+", simplify = TRUE)[,c(1, 6, 7, 8)] 
+colnames(tmp) <- c("Date", "Treatment", "Density", "Dye") 
+sample <- data.frame(tmp) %>% 
+  mutate(Dye = gsub(".fcs", "", Dye) %>% as.integer(),
+         Treatment = factor(Treatment, levels = (c("0mM", "10mM", "100mM", "1M"))))
+rownames(sample) <- oriNames
+pData(dat.f1d) <- sample
+print(pData(dat.f1d))
+write_tsv(pData(dat.f1d), file = "../Input/20240104-fig-1d-cell-density-raw-data-ht.tsv")
+```
+
+# Extract MFI across flowFrames
+```{r}
+tmp <- fsApply(dat.f1d, each_col, median)
+if(all(rownames(tmp) == rownames(sample))){
+  combined_data <- cbind(pData(dat.f1d), tmp) %>% 
+    as.tibble() %>% relocate(name, .after = last_col())
+}
+write_tsv(combined_data, file = "../Input/20240104-fig-1d-MFI-ht.tsv")
+print(combined_data)
+```
+
+# Graph Green MFIs against teatment and group by dye concentration
+
+```{r}
+pf1d <- combined_data %>%
+  dplyr::filter(Density != "U") %>% 
+  dplyr::filter(Treatment == "0mM") %>%
+  ggplot(aes(x = Density, y = BL1.H)) +
+  facet_wrap(~ Dye, scales = "free_y", labeller = as_labeller(c("500" = "500x", "1000" = "1000x", "2000" = "2000x"))) +
+  geom_point(stroke = 1, size = 2) +
+ stat_summary(aes(group = Density), position = position_dodge(0.9), fun = mean, fun.max = mean, fun.min = mean, geom = "crossbar", color = 
+                "red", width = 0.5) +
+  theme_minimal()
+pf1d +
+  labs(x = "Cell Density (OD)", y = "Median Green Fluorescence Intensity") +
+  panel_border(color = "black", size = 1.5) +
+  theme(axis.line = element_blank(),
+        strip.background = element_blank(),
+        axis.text.x = element_text(size = 16, face = "bold", color = "black"),  # Adjust size and face (bold)
+        axis.text.y = element_text(size = 16, face = "bold", color = "black"),
+        axis.title.x = element_text(size = 16, face = "bold"),
+        axis.title.y = element_text(size = 16, face = "bold")
+        )+ 
+  theme(strip.text = element_text(size = 16, face = "bold")) 
+ggsave("Documents/FUN1_data_analysis/biol-4386-course-project-htang5/Methods Paper Writing/01-SYTO9-Midlog-Characterization/output/20240110-SYTO9-Cell-Density-Green-MFI-Plot.png", width = 7, height = 5)
+```
+# Graph Red MFIs against teatment and group by dye concentration
+
+```{r}
+pf1d <- combined_data %>%
+  dplyr::filter(Density != "U") %>% 
+  dplyr::filter(Treatment == "0mM") %>%
+  ggplot(aes(x = Density, y = BL3.H)) +
+  facet_wrap(~ Dye, scales = "free_y", labeller = as_labeller(c("500" = "500x", "1000" = "1000x", "2000" = "2000x"))) +
+  geom_boxplot() +
+  geom_point(stroke = 1, size = 2, position = position_jitter(0.2)) +
+  theme_minimal()
+pf1d +
+  labs(x = "Cell Density (OD)", y = "Median Red Fluorescence Intensity") +
+  panel_border(color = "black", size = 1.5) +
+  theme(axis.line = element_blank(),
+        strip.background = element_blank(),
+        axis.text.x = element_text(size = 16, face = "bold", color = "black"),  # Adjust size and face (bold)
+        axis.text.y = element_text(size = 16, face = "bold", color = "black"),
+        axis.title.x = element_text(size = 16, face = "bold"),
+        axis.title.y = element_text(size = 16, face = "bold")
+        )+ 
+  theme(strip.text = element_text(size = 16, face = "bold")) 
+ggsave("../output/20240104-SYTO9-Cell-Density-Red-MFI-Plot.png", width = 7, height = 5)
+```
+

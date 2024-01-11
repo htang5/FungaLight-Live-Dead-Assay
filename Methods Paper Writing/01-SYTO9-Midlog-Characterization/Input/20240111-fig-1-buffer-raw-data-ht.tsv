@@ -1,0 +1,145 @@
+Date	Buffer	Treatment	Dye	name
+010824	PBS	0 mM	Both	010824_Buffer Extended_Experiment_Plate_pb_0_b.fcs
+010824	PBS	0 mM	PI	010824_Buffer Extended_Experiment_Plate_pb_0_p.fcs
+010824	PBS	0 mM	SYTO9	010824_Buffer Extended_Experiment_Plate_pb_0_s.fcs
+010824	PBS	10 mM	Both	010824_Buffer Extended_Experiment_Plate_pb_10_b.fcs
+010824	PBS	10 mM	PI	010824_Buffer Extended_Experiment_Plate_pb_10_p.fcs
+010824	PBS	10 mM	SYTO9	010824_Buffer Extended_Experiment_Plate_pb_10_s.fcs
+010824	PBS	100 mM	Both	010824_Buffer Extended_Experiment_Plate_pb_100_b.fcs
+010824	PBS	100 mM	PI	010824_Buffer Extended_Experiment_Plate_pb_100_p.fcs
+010824	PBS	100 mM	SYTO9	010824_Buffer Extended_Experiment_Plate_pb_100_s.fcs
+010824	PBS	1000 mM	Both	010824_Buffer Extended_Experiment_Plate_pb_1000_b.fcs
+010824	PBS	1000 mM	PI	010824_Buffer Extended_Experiment_Plate_pb_1000_p.fcs
+010824	PBS	1000 mM	SYTO9	010824_Buffer Extended_Experiment_Plate_pb_1000_s.fcs
+010824	Saline	0 mM	Both	010824_Buffer Extended_Experiment_Plate_sa_0_b.fcs
+010824	Saline	0 mM	PI	010824_Buffer Extended_Experiment_Plate_sa_0_p.fcs
+010824	Saline	0 mM	SYTO9	010824_Buffer Extended_Experiment_Plate_sa_0_s.fcs
+010824	Saline	10 mM	Both	010824_Buffer Extended_Experiment_Plate_sa_10_b.fcs
+010824	Saline	10 mM	PI	010824_Buffer Extended_Experiment_Plate_sa_10_p.fcs
+010824	Saline	10 mM	SYTO9	010824_Buffer Extended_Experiment_Plate_sa_10_s.fcs
+010824	Saline	100 mM	Both	010824_Buffer Extended_Experiment_Plate_sa_100_b.fcs
+010824	Saline	100 mM	PI	010824_Buffer Extended_Experiment_Plate_sa_100_p.fcs
+010824	Saline	100 mM	SYTO9	010824_Buffer Extended_Experiment_Plate_sa_100_s.fcs
+010824	Saline	1000 mM	Both	010824_Buffer Extended_Experiment_Plate_sa_1000_b.fcs
+010824	Saline	1000 mM	PI	010824_Buffer Extended_Experiment_Plate_sa_1000_p.fcs
+010824	Saline	1000 mM	SYTO9	010824_Buffer Extended_Experiment_Plate_sa_1000_s.fcs
+010824	sc complete	0 mM	Both	010824_Buffer Extended_Experiment_Plate_sc_0_b.fcs
+010824	sc complete	0 mM	PI	010824_Buffer Extended_Experiment_Plate_sc_0_p.fcs
+010824	sc complete	0 mM	SYTO9	010824_Buffer Extended_Experiment_Plate_sc_0_s.fcs
+010824	sc complete	10 mM	Both	010824_Buffer Extended_Experiment_Plate_sc_10_b.fcs
+010824	sc complete	10 mM	PI	010824_Buffer Extended_Experiment_Plate_sc_10_p.fcs
+010824	sc complete	10 mM	SYTO9	010824_Buffer Extended_Experiment_Plate_sc_10_s.fcs
+010824	sc complete	100 mM	Both	010824_Buffer Extended_Experiment_Plate_sc_100_b.fcs
+010824	sc complete	100 mM	PI	010824_Buffer Extended_Experiment_Plate_sc_100_p.fcs
+010824	sc complete	100 mM	SYTO9	010824_Buffer Extended_Experiment_Plate_sc_100_s.fcs
+010824	sc complete	1000 mM	Both	010824_Buffer Extended_Experiment_Plate_sc_1000_b.fcs
+010824	sc complete	1000 mM	PI	010824_Buffer Extended_Experiment_Plate_sc_1000_p.fcs
+010824	sc complete	1000 mM	SYTO9	010824_Buffer Extended_Experiment_Plate_sc_1000_s.fcs
+010824	ddH2O	0 mM	Both	010824_Buffer Extended_Experiment_Plate_w_0_b.fcs
+010824	ddH2O	0 mM	PI	010824_Buffer Extended_Experiment_Plate_w_0_p.fcs
+010824	ddH2O	0 mM	SYTO9	010824_Buffer Extended_Experiment_Plate_w_0_s.fcs
+010824	ddH2O	10 mM	Both	010824_Buffer Extended_Experiment_Plate_w_10_b.fcs
+010824	ddH2O	10 mM	PI	010824_Buffer Extended_Experiment_Plate_w_10_p.fcs
+010824	ddH2O	10 mM	SYTO9	010824_Buffer Extended_Experiment_Plate_w_10_s.fcs
+010824	ddH2O	100 mM	Both	010824_Buffer Extended_Experiment_Plate_w_100_b.fcs
+010824	ddH2O	100 mM	PI	010824_Buffer Extended_Experiment_Plate_w_100_p.fcs
+010824	ddH2O	100 mM	SYTO9	010824_Buffer Extended_Experiment_Plate_w_100_s.fcs
+010824	ddH2O	1000 mM	Both	010824_Buffer Extended_Experiment_Plate_w_1000_b.fcs
+010824	ddH2O	1000 mM	PI	010824_Buffer Extended_Experiment_Plate_w_1000_p.fcs
+010824	ddH2O	1000 mM	SYTO9	010824_Buffer Extended_Experiment_Plate_w_1000_s.fcs
+010924	PBS	0 mM	Both	010924_Buffer Extended_Experiment_Plate_pb_0_b.fcs
+010924	PBS	0 mM	PI	010924_Buffer Extended_Experiment_Plate_pb_0_p.fcs
+010924	PBS	0 mM	SYTO9	010924_Buffer Extended_Experiment_Plate_pb_0_s.fcs
+010924	PBS	10 mM	Both	010924_Buffer Extended_Experiment_Plate_pb_10_b.fcs
+010924	PBS	10 mM	PI	010924_Buffer Extended_Experiment_Plate_pb_10_p.fcs
+010924	PBS	10 mM	SYTO9	010924_Buffer Extended_Experiment_Plate_pb_10_s.fcs
+010924	PBS	100 mM	Both	010924_Buffer Extended_Experiment_Plate_pb_100_b.fcs
+010924	PBS	100 mM	PI	010924_Buffer Extended_Experiment_Plate_pb_100_p.fcs
+010924	PBS	100 mM	SYTO9	010924_Buffer Extended_Experiment_Plate_pb_100_s.fcs
+010924	PBS	1000 mM	Both	010924_Buffer Extended_Experiment_Plate_pb_1000_b.fcs
+010924	PBS	1000 mM	PI	010924_Buffer Extended_Experiment_Plate_pb_1000_p.fcs
+010924	PBS	1000 mM	SYTO9	010924_Buffer Extended_Experiment_Plate_pb_1000_s.fcs
+010924	Saline	0 mM	Both	010924_Buffer Extended_Experiment_Plate_sa_0_b.fcs
+010924	Saline	0 mM	PI	010924_Buffer Extended_Experiment_Plate_sa_0_p.fcs
+010924	Saline	0 mM	SYTO9	010924_Buffer Extended_Experiment_Plate_sa_0_s.fcs
+010924	Saline	10 mM	Both	010924_Buffer Extended_Experiment_Plate_sa_10_b.fcs
+010924	Saline	10 mM	PI	010924_Buffer Extended_Experiment_Plate_sa_10_p.fcs
+010924	Saline	10 mM	SYTO9	010924_Buffer Extended_Experiment_Plate_sa_10_s.fcs
+010924	Saline	100 mM	Both	010924_Buffer Extended_Experiment_Plate_sa_100_b.fcs
+010924	Saline	100 mM	PI	010924_Buffer Extended_Experiment_Plate_sa_100_p.fcs
+010924	Saline	100 mM	SYTO9	010924_Buffer Extended_Experiment_Plate_sa_100_s.fcs
+010924	Saline	1000 mM	Both	010924_Buffer Extended_Experiment_Plate_sa_1000_b.fcs
+010924	Saline	1000 mM	PI	010924_Buffer Extended_Experiment_Plate_sa_1000_p.fcs
+010924	Saline	1000 mM	SYTO9	010924_Buffer Extended_Experiment_Plate_sa_1000_s.fcs
+010924	sc complete	0 mM	Both	010924_Buffer Extended_Experiment_Plate_sc_0_b.fcs
+010924	sc complete	0 mM	PI	010924_Buffer Extended_Experiment_Plate_sc_0_p.fcs
+010924	sc complete	0 mM	SYTO9	010924_Buffer Extended_Experiment_Plate_sc_0_s.fcs
+010924	sc complete	10 mM	Both	010924_Buffer Extended_Experiment_Plate_sc_10_b.fcs
+010924	sc complete	10 mM	PI	010924_Buffer Extended_Experiment_Plate_sc_10_p.fcs
+010924	sc complete	10 mM	SYTO9	010924_Buffer Extended_Experiment_Plate_sc_10_s.fcs
+010924	sc complete	100 mM	Both	010924_Buffer Extended_Experiment_Plate_sc_100_b.fcs
+010924	sc complete	100 mM	PI	010924_Buffer Extended_Experiment_Plate_sc_100_p.fcs
+010924	sc complete	100 mM	SYTO9	010924_Buffer Extended_Experiment_Plate_sc_100_s.fcs
+010924	sc complete	1000 mM	Both	010924_Buffer Extended_Experiment_Plate_sc_1000_b.fcs
+010924	sc complete	1000 mM	PI	010924_Buffer Extended_Experiment_Plate_sc_1000_p.fcs
+010924	sc complete	1000 mM	SYTO9	010924_Buffer Extended_Experiment_Plate_sc_1000_s.fcs
+010924	ddH2O	0 mM	Both	010924_Buffer Extended_Experiment_Plate_w_0_b.fcs
+010924	ddH2O	0 mM	PI	010924_Buffer Extended_Experiment_Plate_w_0_p.fcs
+010924	ddH2O	0 mM	SYTO9	010924_Buffer Extended_Experiment_Plate_w_0_s.fcs
+010924	ddH2O	10 mM	Both	010924_Buffer Extended_Experiment_Plate_w_10_b.fcs
+010924	ddH2O	10 mM	PI	010924_Buffer Extended_Experiment_Plate_w_10_p.fcs
+010924	ddH2O	10 mM	SYTO9	010924_Buffer Extended_Experiment_Plate_w_10_s.fcs
+010924	ddH2O	100 mM	Both	010924_Buffer Extended_Experiment_Plate_w_100_b.fcs
+010924	ddH2O	100 mM	PI	010924_Buffer Extended_Experiment_Plate_w_100_p.fcs
+010924	ddH2O	100 mM	SYTO9	010924_Buffer Extended_Experiment_Plate_w_100_s.fcs
+010924	ddH2O	1000 mM	Both	010924_Buffer Extended_Experiment_Plate_w_1000_b.fcs
+010924	ddH2O	1000 mM	PI	010924_Buffer Extended_Experiment_Plate_w_1000_p.fcs
+010924	ddH2O	1000 mM	SYTO9	010924_Buffer Extended_Experiment_Plate_w_1000_s.fcs
+011024	PBS	0 mM	Both	011024_Buffer Extended_Experiment_Plate_pb_0_b.fcs
+011024	PBS	0 mM	PI	011024_Buffer Extended_Experiment_Plate_pb_0_p.fcs
+011024	PBS	0 mM	SYTO9	011024_Buffer Extended_Experiment_Plate_pb_0_s.fcs
+011024	PBS	10 mM	Both	011024_Buffer Extended_Experiment_Plate_pb_10_b.fcs
+011024	PBS	10 mM	PI	011024_Buffer Extended_Experiment_Plate_pb_10_p.fcs
+011024	PBS	10 mM	SYTO9	011024_Buffer Extended_Experiment_Plate_pb_10_s.fcs
+011024	PBS	100 mM	Both	011024_Buffer Extended_Experiment_Plate_pb_100_b.fcs
+011024	PBS	100 mM	PI	011024_Buffer Extended_Experiment_Plate_pb_100_p.fcs
+011024	PBS	100 mM	SYTO9	011024_Buffer Extended_Experiment_Plate_pb_100_s.fcs
+011024	PBS	1000 mM	Both	011024_Buffer Extended_Experiment_Plate_pb_1000_b.fcs
+011024	PBS	1000 mM	PI	011024_Buffer Extended_Experiment_Plate_pb_1000_p.fcs
+011024	PBS	1000 mM	SYTO9	011024_Buffer Extended_Experiment_Plate_pb_1000_s.fcs
+011024	Saline	0 mM	Both	011024_Buffer Extended_Experiment_Plate_sa_0_b.fcs
+011024	Saline	0 mM	PI	011024_Buffer Extended_Experiment_Plate_sa_0_p.fcs
+011024	Saline	0 mM	SYTO9	011024_Buffer Extended_Experiment_Plate_sa_0_s.fcs
+011024	Saline	10 mM	Both	011024_Buffer Extended_Experiment_Plate_sa_10_b.fcs
+011024	Saline	10 mM	PI	011024_Buffer Extended_Experiment_Plate_sa_10_p.fcs
+011024	Saline	10 mM	SYTO9	011024_Buffer Extended_Experiment_Plate_sa_10_s.fcs
+011024	Saline	100 mM	Both	011024_Buffer Extended_Experiment_Plate_sa_100_b.fcs
+011024	Saline	100 mM	PI	011024_Buffer Extended_Experiment_Plate_sa_100_p.fcs
+011024	Saline	100 mM	SYTO9	011024_Buffer Extended_Experiment_Plate_sa_100_s.fcs
+011024	Saline	1000 mM	Both	011024_Buffer Extended_Experiment_Plate_sa_1000_b.fcs
+011024	Saline	1000 mM	PI	011024_Buffer Extended_Experiment_Plate_sa_1000_p.fcs
+011024	Saline	1000 mM	SYTO9	011024_Buffer Extended_Experiment_Plate_sa_1000_s.fcs
+011024	sc complete	0 mM	Both	011024_Buffer Extended_Experiment_Plate_sc_0_b.fcs
+011024	sc complete	0 mM	PI	011024_Buffer Extended_Experiment_Plate_sc_0_p.fcs
+011024	sc complete	0 mM	SYTO9	011024_Buffer Extended_Experiment_Plate_sc_0_s.fcs
+011024	sc complete	10 mM	Both	011024_Buffer Extended_Experiment_Plate_sc_10_b.fcs
+011024	sc complete	10 mM	PI	011024_Buffer Extended_Experiment_Plate_sc_10_p.fcs
+011024	sc complete	10 mM	SYTO9	011024_Buffer Extended_Experiment_Plate_sc_10_s.fcs
+011024	sc complete	100 mM	Both	011024_Buffer Extended_Experiment_Plate_sc_100_b.fcs
+011024	sc complete	100 mM	PI	011024_Buffer Extended_Experiment_Plate_sc_100_p.fcs
+011024	sc complete	100 mM	SYTO9	011024_Buffer Extended_Experiment_Plate_sc_100_s.fcs
+011024	sc complete	1000 mM	Both	011024_Buffer Extended_Experiment_Plate_sc_1000_b.fcs
+011024	sc complete	1000 mM	PI	011024_Buffer Extended_Experiment_Plate_sc_1000_p.fcs
+011024	sc complete	1000 mM	SYTO9	011024_Buffer Extended_Experiment_Plate_sc_1000_s.fcs
+011024	ddH2O	0 mM	Both	011024_Buffer Extended_Experiment_Plate_w_0_b.fcs
+011024	ddH2O	0 mM	PI	011024_Buffer Extended_Experiment_Plate_w_0_p.fcs
+011024	ddH2O	0 mM	SYTO9	011024_Buffer Extended_Experiment_Plate_w_0_s.fcs
+011024	ddH2O	10 mM	Both	011024_Buffer Extended_Experiment_Plate_w_10_b.fcs
+011024	ddH2O	10 mM	PI	011024_Buffer Extended_Experiment_Plate_w_10_p.fcs
+011024	ddH2O	10 mM	SYTO9	011024_Buffer Extended_Experiment_Plate_w_10_s.fcs
+011024	ddH2O	100 mM	Both	011024_Buffer Extended_Experiment_Plate_w_100_b.fcs
+011024	ddH2O	100 mM	PI	011024_Buffer Extended_Experiment_Plate_w_100_p.fcs
+011024	ddH2O	100 mM	SYTO9	011024_Buffer Extended_Experiment_Plate_w_100_s.fcs
+011024	ddH2O	1000 mM	Both	011024_Buffer Extended_Experiment_Plate_w_1000_b.fcs
+011024	ddH2O	1000 mM	PI	011024_Buffer Extended_Experiment_Plate_w_1000_p.fcs
+011024	ddH2O	1000 mM	SYTO9	011024_Buffer Extended_Experiment_Plate_w_1000_s.fcs
