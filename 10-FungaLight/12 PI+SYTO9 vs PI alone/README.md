@@ -1,0 +1,1 @@
+Compare SYTO9 and PI dye, either applied simultaneously or sequentially, with PI alone, to determine if the dye combination is better. Also, develop basic flow gating strategies and a rudimentary FungaLight score.
