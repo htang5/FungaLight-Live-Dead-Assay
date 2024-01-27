@@ -1,0 +1,1 @@
+raw flow data are stored on the RDSS server. see Rmd in the `analysis` folder for raw FCS files location. the Rmd files load the FCS files, gate them and export the tsv files here for further analyses and archiving
