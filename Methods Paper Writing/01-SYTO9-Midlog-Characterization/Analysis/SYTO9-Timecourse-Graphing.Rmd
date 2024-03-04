@@ -72,15 +72,15 @@ combined_data_f1c %>%
   geom_point(stroke = 1, size = 2, position = position_jitter(0.1)) +
   stat_summary(fun.data = "mean_cl_boot", geom = "errorbar", size = 0.5, aes(group = Time), color = "red")+
   stat_summary(aes(group = Time), fun = mean, fun.max = mean, fun.min = mean, geom = "crossbar", color = "red", width = 0.5) +
-  labs(x = "Time (min)", y = "Median Green Fluorescence") +
+  labs(x = "Time (min)", y = "Green MFI") +
   theme_minimal() +
   panel_border(color = "black", size = 1) +
   theme(axis.line = element_blank(),
         strip.background = element_blank(),
-        axis.text.x = element_text(size = 16, face = "bold", color = "black"),  # Adjust size and face (bold)
-        axis.text.y = element_text(size = 16, face = "bold", color = "black"),
-        axis.title.x = element_text(size = 16, face = "bold"),
-        axis.title.y = element_text(size = 16, face = "bold")
+        axis.text.x = element_text(size = 25, face = "bold", color = "black"),  # Adjust size and face (bold)
+        axis.text.y = element_text(size = 25, face = "bold", color = "black"),
+        axis.title.x = element_text(size = 25, face = "bold"),
+        axis.title.y = element_text(size = 25, face = "bold")
         )
 ggsave("../output/20231228-SYTO9-Timecourse--Green-MFI-Plot.png", width = 10, height = 5)
 ```

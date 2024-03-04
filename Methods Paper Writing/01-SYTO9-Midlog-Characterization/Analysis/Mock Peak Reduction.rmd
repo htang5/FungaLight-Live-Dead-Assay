@@ -1,0 +1,177 @@
+---
+title: "Buffer Optimization"
+output: html_document
+date: "2023-12-18"
+---
+
+# Background
+This is the flow cytometry data for miglog phase Cg stained with PI/SYTO9/PI+SYTO9 in different staining buffers, and run through flow cytometry (details in ELN). The goal is to establish FungaLight's staining pattern in various staining buffers.
+
+```{r setup, message=FALSE}
+require(tidyverse)
+require(flowCore)
+require(flowClust)
+require(openCyto)
+require(ggcyto)
+require(cowplot)
+require(ggrdiges)
+```
+
+# Import data
+> FCS files are stored in RDSS/user/flow cytometry, FCS is read and write into an input tsv table. The tsv file is avaliable from the Input folder.
+
+```{r}
+# use relative path to make it easier for collaboration
+data.path = "/space/htang5/Documents/0108-1024_Extended buffer optimization"
+dat.f1e <- read.flowSet(path = data.path, transformation = FALSE,  # the original values are already linearized. 
+                   emptyValue = FALSE,  alter.names = TRUE,   # change parameter names to R format
+                   column.pattern = ".H|FSC|SSC") # only load the height variables for the fluorescent parameters
+```
+
+Simplify the sample names
+
+```{r}
+require(PTXQC)
+oriNames <- sampleNames(dat.f1e)
+tmp <- str_split(oriNames, pattern = "[ _]+", simplify = TRUE)[,c(1, 6, 7, 8)] 
+colnames(tmp) <- c("Date", "Buffer", "Treatment", "Dye") 
+sample <- data.frame(tmp) %>% 
+  mutate(
+    Dye = ifelse(Dye == "p.fcs", "PI", ifelse(Dye == "s.fcs", "SYTO9", "Both")),
+    Buffer = ifelse(Buffer == "sa", "Saline", ifelse(Buffer == "pb", "PBS", ifelse(Buffer == "w", "ddH2O", "sc complete"))),
+    Treatment = factor(Treatment, levels = as.character(c(0, 10, 100, 1000))) %>% paste(" mM", sep = "")
+  )
+rownames(sample) <- oriNames
+pData(dat.f1e) <- sample
+print(pData(dat.f1e))
+write_tsv(pData(dat.f1e), file = "../Input/20240111-fig-1-buffer-raw-data-ht.tsv")
+```
+
+# Gatting for Singlets
+>The following gaphing steps are used to gate singlets by FSC and SSC values. Only singlets are included in analysis.
+
+>Gate for outlier 
+
+```{r}
+outlier.gate <- rectangleGate(filterId = "-outlier", "FSC.H" = c(1.2e5, 1e6), "SSC.H" = c(1e2, 1e6))
+ggcyto(dat.f1e [1], aes(x = FSC.H, y = SSC.H), subset = "root") +
+  geom_hex(bins = 64) + geom_gate(outlier.gate) + facet_wrap(~name, ncol = 2) + ggcyto_par_set(limits = "instrument")
+```
+Add gate to GS
+```{r}
+gs <- GatingSet(dat.f1e) # create a GatingSet
+gs_pop_add(gs, outlier.gate, parent = "root")
+recompute(gs)
+```
+
+>Gate for singlets
+
+```{r fig.width=4, fig.height=4}
+scPars <- ggcyto_par_set(limits = list(x = c(0,1e6), y = c(30,300)))
+ex <- Subset(dat.f1e[[1]], outlier.gate)
+polygon <- matrix(c(1e5, 1e5, 1e6, 1e6, 
+                    60, 105, 135,60), ncol = 2)
+colnames(polygon) <- c("FSC.H", "FSC.W")
+singlet.gate <- polygonGate(filterId = "singlet", boundaries = polygon)
+ggcyto(ex, aes(x = FSC.H, y = FSC.W)) + geom_hex(bins = 128) + geom_gate(singlet.gate) + geom_stats() + scPars
+```
+
+
+Add this gate to the gatingSet
+```{r}
+gs_pop_add(gs, singlet.gate, parent = "-outlier", name = "singlet")
+recompute(gs)
+```
+
+```{r}
+print(dat.f1e)
+```
+
+
+# Output Graph Production
+>Several output graphs are produced, and are stored in the Output folder.
+
+```{r}
+sub <- dat.f1e[pData(dat.f1e)$Dye == "PI" & pData(dat.f1e)$Date == "010924"] 
+sg <- Subset(sub, singlet.gate)
+p2 <- sg %>% 
+  ggcyto(aes(x = "BL1.H", y = "BL3.H")) + 
+  geom_hex(bins = 80, aes(fill = ..ncount..)) + 
+  facet_grid(Buffer ~ Treatment, 
+             labeller = as_labeller(c("0 mM" = "0 mM", "10 mM" = "10 mM", "100 mM" = "100 mM", "1000 mM" = "1000 mM",
+                                      "Saline" = "0.85% Saline", "PBS" = "PBS", "ddH2O" = "DI Water", "sc complete" = "sc Media"))) + 
+  theme_minimal()
+p2 + scale_x_logicle() + scale_y_logicle() +
+  xlab("FungaLight Green Fluorescence") + ylab("FungaLight Red Fluorescence") +
+  panel_border(color = "black", size = 1) +
+  theme(axis.line = element_blank(),
+        strip.background = element_blank(),
+        axis.text.x = element_text(size = 10, color = "black"),  # Adjust size and face (bold)
+        axis.text.y = element_text(size = 10, color = "black"),
+        axis.title.x = element_text(size = 16, face = "bold"),
+        axis.title.y = element_text(size = 16, face = "bold")
+        ) + 
+  theme(strip.text = element_text(size = 9, face = "bold")) 
+ggsave("../output/20240111-PI-Buffers-Flow-Plot.png", width = 7, height = 5)
+```
+
+```{r}
+sub <- dat.f1e[pData(dat.f1e)$Dye == "SYTO9" & pData(dat.f1e)$Date == "010824"] 
+sg <- Subset(sub, singlet.gate)
+p2 <- sg %>% 
+  ggcyto(aes(x = "BL1.H", y = "BL3.H")) + 
+  geom_hex(bins = 80, aes(fill = ..ncount..)) + 
+  facet_grid(Buffer ~ Treatment, 
+             labeller = as_labeller(c("0 mM" = "0 mM", "10 mM" = "10 mM", "100 mM" = "100 mM", "1000 mM" = "1000 mM",
+                                      "Saline" = "0.85% Saline", "PBS" = "PBS", "ddH2O" = "DI Water", "sc complete" = "sc Media")))  + 
+  theme_minimal()
+p2 + scale_x_logicle() + scale_y_logicle() +
+  xlab("FungaLight Green Fluorescence") + ylab("FungaLight Red Fluorescence") +
+  panel_border(color = "black", size = 1) +
+  theme(axis.line = element_blank(),
+        strip.background = element_blank(),
+        axis.text.x = element_text(size = 10, color = "black"),  # Adjust size and face (bold)
+        axis.text.y = element_text(size = 10, color = "black"),
+        axis.title.x = element_text(size = 16, face = "bold"),
+        axis.title.y = element_text(size = 16, face = "bold")
+        ) + 
+  theme(strip.text = element_text(size = 9, face = "bold")) 
+ggsave("../output/20240111-SYTO9-Buffers-Flow-Plot.png", width = 7, height = 5)
+```
+```{r}
+sub <- dat.f1e[pData(dat.f1e)$Dye == "Both" & pData(dat.f1e)$Date == "010824"] 
+sg <- Subset(sub, singlet.gate)
+p2 <- sg %>% 
+  ggcyto(aes(x = "BL1.H", y = "BL3.H")) + 
+  geom_hex(bins = 80, aes(fill = ..ncount..)) + 
+  facet_grid(Buffer ~ Treatment, 
+             labeller = as_labeller(c("0 mM" = "0 mM", "10 mM" = "10 mM", "100 mM" = "100 mM", "1000 mM" = "1000 mM",
+                                      "Saline" = "0.85% Saline", "PBS" = "PBS", "ddH2O" = "DI Water", "sc complete" = "sc Media")))  + 
+  theme_minimal()
+p2 + scale_x_logicle() + scale_y_logicle() +
+  xlab("FungaLight Green Fluorescence") + ylab("FungaLight Red Fluorescence") +
+  panel_border(color = "black", size = 1) +
+  theme(axis.line = element_blank(),
+        strip.background = element_blank(),
+        axis.text.x = element_text(size = 10, color = "black"),  # Adjust size and face (bold)
+        axis.text.y = element_text(size = 10, color = "black"),
+        axis.title.x = element_text(size = 16, face = "bold"),
+        axis.title.y = element_text(size = 16, face = "bold")
+        ) + 
+  theme(strip.text = element_text(size = 9, face = "bold")) 
+ggsave("../output/20240111-Both-Buffers-Flow-Plot.png", width = 7, height = 5)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+

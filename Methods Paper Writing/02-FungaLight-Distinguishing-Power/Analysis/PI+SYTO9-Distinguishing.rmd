@@ -78,38 +78,81 @@ Add this gate to the gatingSet
 gs_pop_add(gs, singlet.gate, parent = "-outlier", name = "singlet")
 recompute(gs)
 ```
-
->Gate for Red Positive
-RP population is defined by having red fluorescence value above 10^2.15.
+> Gate for Dead population
+Dead population is defined by having red fluorescence value above 10^2.
 
 ```{r fig.width=4, fig.height=4}
 scPars <- ggcyto_par_set(limits = list(x = c(0,1e6), y = c(0,1e6)))
-ex <- Subset(dat.f2[[25]], singlet.gate)
-polygon <- matrix(c(0, 10^3.5, 10^3.5, 0,
+ex <- Subset(dat.f2b[[10]], singlet.gate)
+polygon <- matrix(c(0, 10^3.6, 10^3.6, 0,
                     10^2.15, 10^2.15, 1e6, 1e6), ncol = 2)
 colnames(polygon) <- c("BL1.H", "BL3.H")
-RP.gate <- polygonGate(filterId = "dead", boundaries = polygon)
-ggcyto(ex, aes(x = BL1.H, y = BL3.H)) + geom_hex(bins = 128) + geom_gate(RP.gate) + geom_stats() + scPars + scale_x_logicle() + scale_y_logicle() 
+dead.gate <- polygonGate(filterId = "dead", boundaries = polygon)
+ggcyto(ex, aes(x = BL1.H, y = BL3.H)) + geom_hex(bins = 128) + geom_gate(dead.gate) + geom_stats() + scPars + scale_x_logicle() + scale_y_logicle() 
+```
+Add this gate to the gatingSet
+
+```{r}
+gs_pop_add(gs, dead.gate, parent = "singlet", name = "dead")
+recompute(gs)
+```
+
+> Gate for Live
+live population is gated based on the mock treated sample
+
+```{r fig.width=4, fig.height=4}
+scPars <- ggcyto_par_set(limits = list(x = c(0,1e6), y = c(0,1e6)))
+ex <- Subset(dat.f2b[[8]], singlet.gate)
+polygon1 <- matrix(c(0, 10^2.8, 10^2.8, 0,
+                    0, 0, 10^2.15, 10^2.15), ncol = 2)
+colnames(polygon1) <- c("BL1.H", "BL3.H")
+live.gate <- polygonGate(filterId = "live", boundaries = polygon1)
+ggcyto(ex, aes(x = BL1.H, y = BL3.H)) + geom_hex(bins = 128) + geom_gate(live.gate) + geom_stats() + scPars + scale_x_logicle() + scale_y_logicle() 
 ```
 Add this gate to the gatingSet
 
 ```{r eval=FALSE, include=FALSE}
-gs_pop_add(gs, RP.gate, parent = "singlet", name = "RedPositive")
+gs_pop_add(gs, live.gate, parent = "singlet", name = "live")
+recompute(gs)
+```
+
+>Gate for Intermediate
+live intermediate is gated based on 100mM treated sample
+
+```{r fig.width=4, fig.height=4}
+scPars <- ggcyto_par_set(limits = list(x = c(0,1e6), y = c(0,1e6)))
+ex <- Subset(dat.f2b[[7]], singlet.gate)
+polygon2 <- matrix(c(10^2.8, 10^4, 10^4, 10^2.8,
+                    0, 0, 10^3, 10^3), ncol = 2)
+colnames(polygon2) <- c("BL1.H", "BL3.H")
+inter.gate <- polygonGate(filterId = "Inter", boundaries = polygon2)
+ggcyto(ex, aes(x = BL1.H, y = BL3.H)) + geom_hex(bins = 128) + geom_gate(inter.gate) + geom_stats() + scPars + scale_x_logicle() + scale_y_logicle() 
+```
+
+Add this gate to the gatingSet
+
+```{r eval=FALSE, include=FALSE}
+gs_pop_add(gs, inter.gate, parent = "singlet", name = "Intermediate")
 recompute(gs)
 ```
 
 >Exported gated event counts
 
 ```{r}
-gated_stats_f2 <- gs_pop_get_stats(gs) %>% 
+gated_stats_f2b <- gs_pop_get_stats(gs) %>% 
   as_tibble() %>% 
   mutate(pop = gsub(".*/", "", pop), pop = gsub("-outlier", "cells", pop)) %>% 
   pivot_wider(names_from = pop, names_prefix = "n_", values_from = count)
-gated_stats_f2$percent_RP <- stats$n_RedPositive / stats$n_singlet
-gated_data <- cbind(pData(dat.f2), gated_stats_f2) %>% 
+
+gated_stats_f2b$percent_dead <- gated_stats_f2b$n_dead / gated_stats_f2b$n_singlet
+gated_stats_f2b$percent_live <- gated_stats_f2b$n_live / gated_stats_f2b$n_singlet
+gated_stats_f2b$percent_inter <- gated_stats_f2b$n_Intermediate / gated_stats_f2b$n_singlet
+gated_stats_f2b$FGS <- gated_stats_f2b$percent_live + 0.5*gated_stats_f2b$percent_inter - 1*gated_stats_f2b$percent_dead
+
+gated_data <- cbind(pData(dat.f2b), gated_stats_f2b) %>% 
     as.tibble() %>% relocate(name, .after = last_col())
 
-write_tsv(gated_data, file = "../Input/20240104-fig-2-PI-Gated-ht.tsv")
+write_tsv(gated_data, file = "../Input/20240104-fig-2b-PI+SYTO9-Gated-ht.tsv")
 print(gated_data)
 ```
 
@@ -117,80 +160,19 @@ print(gated_data)
 # Output Graph Production
 >Several output graphs are produced, and are stored in the Output folder.
 
->Visualizing flow raw data (not included in output)
+> Plot FGS vs [H2O2]
 
 ```{r}
-sub <- dat.f2[pData(dat.f2)$Dye == "PI" & pData(dat.f2)$Date == "112023"] 
-sg <- Subset(sub, singlet.gate)
-p2 <- sg %>% 
-  ggcyto(aes(x = "BL1.H", y = "BL3.H")) + 
-  geom_hex(bins = 80, aes(fill = ..ncount..)) + 
-  facet_grid(Dilution ~ Treatment, 
-             labeller = as_labeller(c("0 mM" = "0 mM", "10 mM" = "10 mM", "100 mM" = "100 mM", "1000 mM" = "1000 mM", 
-                                      "250 x" = "250x", "500 x" = "500x", "1000 x" = "1000x", "2000 x" = "2000x"))) + 
-  theme_minimal()
-p2 + scale_x_logicle() + scale_y_logicle() +
-  xlab("FungaLight Green Fluorescence") + ylab("FungaLight Red Fluorescence") +
-  panel_border(color = "black", size = 1) +
-  theme(axis.line = element_blank(),
-        strip.background = element_blank(),
-        axis.text.x = element_text(size = 10, color = "black"),  # Adjust size and face (bold)
-        axis.text.y = element_text(size = 10, color = "black"),
-        axis.title.x = element_text(size = 16, face = "bold"),
-        axis.title.y = element_text(size = 16, face = "bold")
-        ) + 
-  theme(strip.text = element_text(size = 12, face = "bold")) 
-#ggsave("../output/20231228-PI-Dilutions-Raw-Flow-Plot.png", width = 5, height = 3)
-```
-
-
-> Ridges plot for demsontrationg gating scheme
-
-```{r}
-# Subset and filter data
-sub <- dat.f2[pData(dat.f2)$Dye == "PI" & pData(dat.f2)$Date == "112023" & pData(dat.f2)$Dilution == "1000 x"] 
-sg <- Subset(sub, singlet.gate)
-
-# Create the base plot components
-p0 <- list(
-  geom_density_ridges(aes(y = Treatment)), 
-  scale_x_flowjo_biexp(),
-  facet_null(),
-  theme_bw(base_size = 12)
-)
-
-p01 <- list(
-  xlab("FungaLight Red Fluorescence"),
-  ylab("Treatment Hydrogen Peroxide Concentration"),
-  theme(axis.line = element_blank(),
-        strip.background = element_blank(),
-        axis.text.x = element_text(size = 14, color = "black", face = "bold"),  # Adjust size and face (bold)
-        axis.text.y = element_text(size = 14, color = "black", face = "bold"),
-        axis.title.x = element_text(size = 14, face = "bold"),
-        axis.title.y = element_text(size = 12, face = "bold")
-        )
-)
-
-# Create individual ggcyto plots
-p4 <- ggcyto(sg, aes(x = BL3.H)) + p0 + p01
-print(p4)
-ggsave("../output/20240104-PI-Distinguishing-Raw-Ridges-Plot.png", width = 5, height = 5)
-```
-> Plot % Red Positive vs [H2O2]
-
-```{r}
-pf1a <- gated_data %>%
-  dplyr::filter(Dye == "PI") %>% 
+pf2b <- gated_data %>%
+  #dplyr::filter(Dye == "PI") %>% 
   #dplyr::filter(Treatment == "0 mM") %>%
-  mutate(Dilution = factor(Dilution, levels = c("250 x", "500 x", "1000 x", "2000 x"))) %>%
-  ggplot(aes(x = Treatment, y = percent_RP)) +
-  facet_wrap(~ Dilution, scale = "free_y") +
+  mutate(Treatment = factor(Treatment, levels = c("0", "20", "40", "60", "80", "100", "1000"))) %>%
+  ggplot(aes(x = Treatment, y = percent_inter)) +
   geom_boxplot() +
   geom_point(stroke = 1, size = 2, position = position_jitter(0.2)) +
-  scale_y_continuous(labels = scales::percent) +
   theme_minimal()
-pf1a +
-  labs(x = "Hydrogen Peroxide Treatment Concentration", y = "Gated Percent Red Positive Cells") +
+pf2b +
+  labs(x = "Hydrogen Peroxide Treatment Concentration (mM)", y = "FungaLight Score") +
   panel_border(color = "black", size = 1.5) +
   theme(axis.line = element_blank(),
         strip.background = element_blank(),
@@ -200,7 +182,7 @@ pf1a +
         axis.title.y = element_text(size = 16, face = "bold")
         )+ 
   theme(strip.text = element_text(size = 16, face = "bold")) 
-ggsave("../output/20240104-PI-Dilutions-Gated_RP-Plot.png", width = 7, height = 5)
+#ggsave("../output/20240104-PI+SYTO9_Gated_Plot.png", width = 7, height = 5)
 ```
 
 

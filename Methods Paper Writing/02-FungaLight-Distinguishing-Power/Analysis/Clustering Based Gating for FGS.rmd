@@ -1,0 +1,157 @@
+---
+title: "Dye Order & Distinguishing Power"
+output: html_document
+date: "2023-12-18"
+---
+
+# Background
+This is the flow cytometry data for miglog phase Cg stained with PI/PI+SYTO9/ SYTO+PI in different staining orders, and run through flow cytometry (details in ELN). The goal is to establish FungaLight's distinguishing power by Flow Clust gating.
+
+```{r setup, message=FALSE}
+require(tidyverse)
+require(flowCore)
+require(flowClust)
+require(openCyto)
+require(ggcyto)
+require(cowplot)
+require(ggrdiges)
+```
+
+# Import data
+> FCS files are stored in RDSS/user/flow cytometry, FCS is read and write into an input tsv table. The tsv file is avaliable from the Input folder.
+
+```{r}
+# use relative path to make it easier for collaboration
+data.path = "/space/htang5/Documents/20240117_Dye Order"
+dat.f1g <- read.flowSet(path = data.path, transformation = FALSE,  # the original values are already linearized. 
+                   emptyValue = FALSE,  alter.names = TRUE,   # change parameter names to R format
+                   column.pattern = ".H|FSC|SSC") # only load the height variables for the fluorescent parameters
+```
+
+Simplify the sample names
+
+```{r}
+require(PTXQC)
+oriNames <- sampleNames(dat.f1g)
+tmp <- str_split(oriNames, pattern = "[ _]+", simplify = TRUE)[,c(1, 6, 7)]
+colnames(tmp) <- c("Date", "Treatment", "Dye") 
+sample <- data.frame(tmp) %>% 
+  mutate(
+    Dye = ifelse(Dye == "p.fcs", "PI", ifelse(Dye == "sf.fcs", "SYTO9_first", "PI_first")),
+    Treatment = factor(Treatment, levels = as.character(c(0, 10, 100, 1000))) %>% paste(" mM", sep = "")
+  )
+rownames(sample) <- oriNames
+pData(dat.f1g) <- sample
+print(pData(dat.f1g))
+#write_tsv(pData(dat.f1g), file = "../Input/20240117-fig-1-Dye-Order-raw-data-ht.tsv")
+```
+
+# Gatting for Singlets
+>The following gaphing steps are used to gate singlets by FSC and SSC values. Only singlets are included in analysis.
+
+>Gate for outlier 
+
+```{r}
+outlier.gate <- rectangleGate(filterId = "-outlier", "FSC.H" = c(1.2e5, 1e6), "SSC.H" = c(1e2, 1e6))
+ggcyto(dat.f1g [1], aes(x = FSC.H, y = SSC.H), subset = "root") +
+  geom_hex(bins = 64) + geom_gate(outlier.gate) + facet_wrap(~name, ncol = 2) + ggcyto_par_set(limits = "instrument")
+```
+Add gate to GS
+```{r}
+gs <- GatingSet(dat.f1g) # create a GatingSet
+gs_pop_add(gs, outlier.gate, parent = "root")
+recompute(gs)
+```
+
+>Gate for singlets
+
+```{r fig.width=4, fig.height=4}
+scPars <- ggcyto_par_set(limits = list(x = c(0,1e6), y = c(30,300)))
+ex <- Subset(dat.f1g[[1]], outlier.gate)
+polygon <- matrix(c(1e5, 1e5, 1e6, 1e6, 
+                    60, 105, 135,60), ncol = 2)
+colnames(polygon) <- c("FSC.H", "FSC.W")
+singlet.gate <- polygonGate(filterId = "singlet", boundaries = polygon)
+ggcyto(ex, aes(x = FSC.H, y = FSC.W)) + geom_hex(bins = 128) + geom_gate(singlet.gate) + geom_stats() + scPars
+```
+
+
+Add this gate to the gatingSet
+```{r}
+gs_pop_add(gs, singlet.gate, parent = "-outlier", name = "singlet")
+recompute(gs)
+```
+> Flow clust gating
+
+>Plot and visualize populations in samples
+Plot the singlet events and check for the presence of multiple populations. 
+
+```{r fig.width=10, fig.height=10}
+ggcyto(gs, aes(x = BL1.H, y = BL3.H), subset = "singlet") + geom_hex(bins = 80) +
+  facet_wrap(~name, ncol = 10) + scale_x_logicle() + scale_y_logicle() + panel_border()
+```
+
+> Log transform the data to help with gating
+
+```{r}
+lgcl <- logicle_trans()
+transList <- transformerList(c(lgBL1.H = "BL1.H", lgclBL3.H = "BL3.H"), lgcl)
+transform(gs, transList)
+```
+
+> Use a 2 cluster gating strategy to select the live vs dead populations
+
+```{r message=FALSE}
+ex <- dat.f1g [[3]]
+# set the parameters for the cluster gate
+k = 2; q = 0.9
+# end setting
+# transform the two fluorescent parameters for clustering
+lgcl <- logicleTransform()
+ex <- transform(ex, lgBL1.H = lgcl(`BL1.H`), lgBL3.H = lgcl(`BL3.H`))
+fluo.gate <- gate_flowclust_2d(ex, "lgBL1.H", "lgBL3.H", K = k, quantile = q, target = c(2,3))
+ggcyto(ex, aes(x = lgBL1.H, y = lgBL3.H)) + geom_hex(bins = 64) + geom_gate(fluo.gate) + geom_stats()
+```
+Implement the 2 cluster gates
+```{r}
+list.redo <- c("239-555-1", "239-555-3")
+newGate <- lapply(list.redo, function(x){
+  gate_flowclust_2d(dat[[x]], "BL1.H", "YL2.H", K = 2, quantile = 0.9, target = c(3,4))
+})
+names(newGate) <- list.redo
+#newGate["218-555-1"] <- gate_flowclust_2d(dat[["218-555-1"]], "BL1.H", "YL2.H", K = 3, quantile = 0.9, target = c(3,4))
+ggcyto(gs[list.redo], aes(x = BL1.H, y = YL2.H), subset = "singlet") + geom_hex(bins = 64) +
+  geom_gate(newGate) + geom_stats()
+```
+
+
+
+>Exported gated event counts
+
+```{r}
+gated_stats_f1g <- gs_pop_get_stats(gs) %>% 
+  as_tibble() %>% 
+  mutate(pop = gsub(".*/", "", pop), pop = gsub("-outlier", "cells", pop)) %>% 
+  pivot_wider(names_from = pop, names_prefix = "n_", values_from = count)
+gated_stats_f1g$percent_PIDead <- gated_stats_f1g$n_PIDead / gated_stats_f1g$n_singlet
+gated_stats_f1g$percent_CODead <- gated_stats_f1g$n_CODead / gated_stats_f1g$n_singlet
+gated_data <- cbind(pData(dat.f1g), gated_stats_f1g) %>% 
+    as.tibble() %>% relocate(name, .after = last_col())
+write_tsv(gated_data, file = "../Input/202401017-fig-1g-Dye-Order-gated-ht.tsv")
+print(gated_data)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

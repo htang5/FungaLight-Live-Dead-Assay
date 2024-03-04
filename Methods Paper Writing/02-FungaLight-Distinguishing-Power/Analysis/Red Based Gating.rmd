@@ -1,0 +1,235 @@
+---
+title: "Dye Order & Distinguishing Power"
+output: html_document
+date: "2023-12-18"
+---
+
+# Background
+This is the flow cytometry data for miglog phase Cg stained with PI/PI+SYTO9/ SYTO+PI in different staining orders, and run through flow cytometry (details in ELN). The goal is to establish FungaLight's distinguishing power with different staining protocols.
+
+```{r setup, message=FALSE}
+require(tidyverse)
+require(flowCore)
+require(flowClust)
+require(openCyto)
+require(ggcyto)
+require(cowplot)
+require(ggrdiges)
+```
+
+# Import data
+> FCS files are stored in RDSS/user/flow cytometry, FCS is read and write into an input tsv table. The tsv file is avaliable from the Input folder.
+
+```{r}
+# use relative path to make it easier for collaboration
+data.path = "/space/htang5/Documents/20240117_Dye Order"
+dat.f1g <- read.flowSet(path = data.path, transformation = FALSE,  # the original values are already linearized. 
+                   emptyValue = FALSE,  alter.names = TRUE,   # change parameter names to R format
+                   column.pattern = ".H|FSC|SSC") # only load the height variables for the fluorescent parameters
+```
+
+Simplify the sample names
+
+```{r}
+require(PTXQC)
+oriNames <- sampleNames(dat.f1g)
+tmp <- str_split(oriNames, pattern = "[ _]+", simplify = TRUE)[,c(1, 6, 7)]
+colnames(tmp) <- c("Date", "Treatment", "Dye") 
+sample <- data.frame(tmp) %>% 
+  mutate(
+    Dye = ifelse(Dye == "p.fcs", "PI", ifelse(Dye == "sf.fcs", "SYTO9_first", "PI_first")),
+    Treatment = factor(Treatment, levels = as.character(c(0, 10, 100, 1000))) %>% paste(" mM", sep = "")
+  )
+rownames(sample) <- oriNames
+pData(dat.f1g) <- sample
+print(pData(dat.f1g))
+#write_tsv(pData(dat.f1g), file = "../Input/20240117-fig-1-Dye-Order-raw-data-ht.tsv")
+```
+
+# Gatting for Singlets
+>The following gaphing steps are used to gate singlets by FSC and SSC values. Only singlets are included in analysis.
+
+>Gate for outlier 
+
+```{r}
+outlier.gate <- rectangleGate(filterId = "-outlier", "FSC.H" = c(1.2e5, 1e6), "SSC.H" = c(1e2, 1e6))
+ggcyto(dat.f1g [1], aes(x = FSC.H, y = SSC.H), subset = "root") +
+  geom_hex(bins = 64) + geom_gate(outlier.gate) + facet_wrap(~name, ncol = 2) + ggcyto_par_set(limits = "instrument")
+```
+Add gate to GS
+```{r}
+gs <- GatingSet(dat.f1g) # create a GatingSet
+gs_pop_add(gs, outlier.gate, parent = "root")
+recompute(gs)
+```
+
+>Gate for singlets
+
+```{r fig.width=4, fig.height=4}
+scPars <- ggcyto_par_set(limits = list(x = c(0,1e6), y = c(30,300)))
+ex <- Subset(dat.f1g[[1]], outlier.gate)
+polygon <- matrix(c(1e5, 1e5, 1e6, 1e6, 
+                    60, 105, 135,60), ncol = 2)
+colnames(polygon) <- c("FSC.H", "FSC.W")
+singlet.gate <- polygonGate(filterId = "singlet", boundaries = polygon)
+ggcyto(ex, aes(x = FSC.H, y = FSC.W)) + geom_hex(bins = 128) + geom_gate(singlet.gate) + geom_stats() + scPars
+```
+
+
+Add this gate to the gatingSet
+```{r}
+gs_pop_add(gs, singlet.gate, parent = "-outlier", name = "singlet")
+recompute(gs)
+```
+
+> Gate for Red Negative Population
+This is the live population with red fluorescence below 10^2.2
+
+```{r fig.width=4, fig.height=4}
+scPars <- ggcyto_par_set(limits = list(x = c(0,1e6), y = c(0,1e6)))
+ex <- Subset(dat.f1g[[9]], singlet.gate)
+polygon <- matrix(c(0, 10^5, 10^5, 0,
+                    10^2.2, 10^2.2, 0, 0), ncol = 2)
+colnames(polygon) <- c("BL1.H", "BL3.H")
+live.gate <- polygonGate(filterId = "live", boundaries = polygon)
+ggcyto(ex, aes(x = BL1.H, y = BL3.H)) + geom_hex(bins = 128) + geom_gate(live.gate) + geom_stats() + scPars + scale_x_logicle() + scale_y_logicle() 
+```
+Add this gate to the gatingSet
+
+```{r eval=FALSE, include=FALSE}
+gs_pop_add(gs, live.gate, parent = "singlet", name = "live")
+recompute(gs)
+```
+
+> Gate for Red Positive Intermediates
+This is the intermediate population on the right side
+
+```{r fig.width=4, fig.height=4}
+scPars <- ggcyto_par_set(limits = list(x = c(0,1e6), y = c(0,1e6)))
+ex <- Subset(dat.f1g[[9]], singlet.gate)
+polygon <- matrix(c(10^5, 10^3,10^5,
+                    10^2.2, 10^2.2, 10^4), ncol = 2)
+colnames(polygon) <- c("BL1.H", "BL3.H")
+inter.gate <- polygonGate(filterId = "inter", boundaries = polygon)
+ggcyto(ex, aes(x = BL1.H, y = BL3.H)) + geom_hex(bins = 128) + geom_gate(inter.gate) + geom_stats() + scPars + scale_x_logicle() + scale_y_logicle() 
+```
+Add this gate to the gatingSet
+
+```{r eval=FALSE, include=FALSE}
+gs_pop_add(gs, inter.gate, parent = "singlet", name = "inter")
+recompute(gs)
+```
+
+> Gate for Red Positive Dead
+This is the dead population on the right side
+
+```{r fig.width=4, fig.height=4}
+scPars <- ggcyto_par_set(limits = list(x = c(0,1e6), y = c(0,1e6)))
+ex <- Subset(dat.f1g[[9]], singlet.gate)
+polygon <- matrix(c(10^3, 10^3,10^5,
+                    10^4.5, 10^2.2, 10^4), ncol = 2)
+colnames(polygon) <- c("BL1.H", "BL3.H")
+dead.gate <- polygonGate(filterId = "dead", boundaries = polygon)
+ggcyto(ex, aes(x = BL1.H, y = BL3.H)) + geom_hex(bins = 128) + geom_gate(dead.gate) + geom_stats() + scPars + scale_x_logicle() + scale_y_logicle() 
+```
+Add this gate to the gatingSet
+
+```{r eval=FALSE, include=FALSE}
+gs_pop_add(gs, dead.gate, parent = "singlet", name = "dead")
+recompute(gs)
+```
+
+>Exported gated event counts
+
+```{r}
+gated_stats_f1g <- gs_pop_get_stats(gs) %>% 
+  as_tibble() %>% 
+  mutate(pop = gsub(".*/", "", pop), pop = gsub("-outlier", "cells", pop)) %>% 
+  pivot_wider(names_from = pop, names_prefix = "n_", values_from = count)
+gated_stats_f1g$percent_Dead <- gated_stats_f1g$n_dead / gated_stats_f1g$n_singlet
+gated_stats_f1g$percent_Live <- gated_stats_f1g$n_live / gated_stats_f1g$n_singlet
+gated_stats_f1g$percent_inter <- gated_stats_f1g$n_inter / gated_stats_f1g$n_singlet
+gated_data <- cbind(pData(dat.f1g), gated_stats_f1g) %>% 
+    as.tibble() %>% relocate(name, .after = last_col())
+write_tsv(gated_data, file = "../Input/20240124-fig-2-Dye-Order-gated-ht.tsv")
+print(gated_data)
+```
+# Extract MFI of intermediate population green channel
+>MFI are extracted and wrote into tsv. The tsv is stored in the input folder.
+
+```{r}
+interpop <- Subset(dat.f1g, inter.gate)
+tmp <- fsApply(interpop, each_col, median)
+combined_data <- cbind(gated_data, tmp) %>%
+    as.tibble() %>% relocate(name, .after = last_col())
+
+write_tsv(combined_data, file = "../Input/20240124_four_variable_matrix.tsv")
+print(combined_data)
+```
+
+
+# Output Graph Production
+>Several output graphs are produced, and are stored in the Output folder.
+
+```{r}
+sub <- dat.f1g[pData(dat.f1g)$Date == "011624"] #pData(dat.f1g)$Dye == "PI" & 
+sg <- Subset(sub, singlet.gate)
+p2 <- sg %>% 
+  ggcyto(aes(x = "BL1.H", y = "BL3.H")) + 
+  geom_hex(bins = 80, aes(fill = ..ncount..)) + 
+  facet_grid(Dye ~ Treatment, 
+             labeller = as_labeller(c("0 mM" = "0 mM", "10 mM" = "10 mM", "100 mM" = "100 mM", "1000 mM" = "1000 mM",
+                                       "PI" = "PI only", "SYTO9_first" = "SYTO9+PI Costain", "PI_first" = "PI first"))) + 
+  theme_minimal()
+p2 + scale_x_logicle() + scale_y_logicle() +
+  xlab("FungaLight Green Fluorescence") + ylab("FungaLight Red Fluorescence") +
+  panel_border(color = "black", size = 1) +
+  theme(axis.line = element_blank(),
+        strip.background = element_blank(),
+        axis.text.x = element_text(size = 10, color = "black"),  # Adjust size and face (bold)
+        axis.text.y = element_text(size = 10, color = "black"),
+        axis.title.x = element_text(size = 16, face = "bold"),
+        axis.title.y = element_text(size = 16, face = "bold")
+        ) + 
+  theme(strip.text = element_text(size = 9, face = "bold")) 
+ggsave("../output/20240117-dye-Order-Flow-Plot.png", width = 7, height = 5)
+```
+> Plot % Dead and Compare
+
+```{r}
+pf1g <- gated_data %>%
+  dplyr::filter(!(Dye %in% c("PI"))) %>% 
+  dplyr::filter(!(Treatment %in% c("1000 mM")))  %>%
+  #mutate(Dilution = factor(Dilution, levels = c("250 x", "500 x", "1000 x", "2000 x"))) %>%
+  ggplot(aes(x = Treatment, y = percent_Live)) +
+  facet_wrap(~ Dye, scale = "free_y") +
+  geom_boxplot() +
+  geom_point(stroke = 1, size = 2, position = position_jitter(0.2)) +
+  scale_y_continuous(labels = scales::percent) +
+  theme_minimal()
+pf1g +
+  labs(x = "Hydrogen Peroxide Treatment Concentration", y = "Gated Live Cells") +
+  panel_border(color = "black", size = 1.5) +
+  theme(axis.line = element_blank(),
+        strip.background = element_blank(),
+        axis.text.x = element_text(size = 12, face = "bold", color = "black"),  # Adjust size and face (bold)
+        axis.text.y = element_text(size = 16, face = "bold", color = "black"),
+        axis.title.x = element_text(size = 16, face = "bold"),
+        axis.title.y = element_text(size = 16, face = "bold")
+        )+ 
+  theme(strip.text = element_text(size = 16, face = "bold")) 
+#ggsave("../output/20240104-PI-Dilutions-Gated_RP-Plot.png", width = 7, height = 5)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+

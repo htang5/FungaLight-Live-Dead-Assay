@@ -1,0 +1,239 @@
+---
+title: "SYTO9-Concentration-Graphing"
+output: html_document
+date: "2023-12-18"
+---
+
+# Background
+This is the flow cytometry data for miglog phase Cg stained with various concentrations of SYTO9 alone, and run through flow cytometry (details in ELN). The goal is to establish SYTO9's staining pattern in midlog phase yeasts cells.
+
+```{r setup, message=FALSE}
+require(tidyverse)
+require(flowCore)
+require(flowClust)
+require(openCyto)
+require(ggcyto)
+require(cowplot)
+require(ggrdiges)
+```
+
+# Import data
+> FCS files are stored in RDSS/user/flow cytometry, FCS is read and write into an input tsv table. The tsv file is avaliable from the Input folder.
+
+```{r}
+# use relative path to make it easier for collaboration
+data.path = "/space/htang5/Documents/112723_SP Dilutions/Raw"
+dat.f1 <- read.flowSet(path = data.path, transformation = FALSE,  # the original values are already linearized. 
+                   emptyValue = FALSE,  alter.names = TRUE,   # change parameter names to R format
+                   column.pattern = ".H|FSC|SSC") # only load the height variables for the fluorescent parameters
+```
+
+Simplify the sample names
+
+```{r}
+require(PTXQC)
+oriNames <- sampleNames(dat.f1)
+tmp <- str_split(oriNames, pattern = "[ _]+", simplify = TRUE)[,c(1, 5, 6, 7)] 
+colnames(tmp) <- c("Date", "Treatment", "Dilution", "Dye") 
+sample <- data.frame(tmp) %>% 
+  mutate(Dye = ifelse(Dye == "p.fcs", "PI", "SYTO9"),
+         Dilution = factor(gsub(".fcs", "", Dilution)) %>% paste(" x", sep = ""),
+         Treatment = factor(Treatment, levels = as.character(c(0, 10, 100, 1000))) %>% paste(" mM", sep = "")) %>%
+  mutate(Dilution = factor(Dilution, levels = c("250 x", "500 x", "1000 x", "2000 x")))
+rownames(sample) <- oriNames
+pData(dat.f1) <- sample
+print(pData(dat.f1))
+write_tsv(pData(dat.f1), file = "../Input/20231228-fig-1-raw-data-ht.tsv")
+```
+
+# Gatting for Singlets
+>The following gaphing steps are used to gate singlets by FSC and SSC values. Only singlets are included in analysis.
+
+>Gate for outlier 
+
+```{r}
+outlier.gate <- rectangleGate(filterId = "-outlier", "FSC.H" = c(1.2e5, 1e6), "SSC.H" = c(1e2, 1e6))
+ggcyto(dat.f1 [1], aes(x = FSC.H, y = SSC.H), subset = "root") +
+  geom_hex(bins = 64) + geom_gate(outlier.gate) + facet_wrap(~name, ncol = 2) + ggcyto_par_set(limits = "instrument")
+```
+Add gate to GS
+```{r}
+gs <- GatingSet(dat.f1) # create a GatingSet
+gs_pop_add(gs, outlier.gate, parent = "root")
+recompute(gs)
+```
+
+>Gate for singlets
+
+```{r fig.width=4, fig.height=4}
+scPars <- ggcyto_par_set(limits = list(x = c(0,1e6), y = c(30,300)))
+ex <- Subset(dat.f1[[1]], outlier.gate)
+polygon <- matrix(c(1e5, 1e5, 1e6, 1e6, 
+                    60, 105, 135,60), ncol = 2)
+colnames(polygon) <- c("FSC.H", "FSC.W")
+singlet.gate <- polygonGate(filterId = "singlet", boundaries = polygon)
+ggcyto(ex, aes(x = FSC.H, y = FSC.W)) + geom_hex(bins = 128) + geom_gate(singlet.gate) + geom_stats() + scPars
+```
+
+
+Add this gate to the gatingSet
+```{r}
+gs_pop_add(gs, singlet.gate, parent = "-outlier", name = "singlet")
+recompute(gs)
+```
+
+
+```{r}
+print(pData(dat.f1))
+```
+
+# Output Graph Production
+>Several output graphs are produced, and are stored in the Output folder.
+
+```{r}
+
+sub <- dat.f1[pData(dat.f1)$Dye == "PI" & pData(dat.f1)$Date == "112023"] 
+sg <- Subset(sub, singlet.gate)
+p2 <- sg %>% 
+  ggcyto(aes(x = "BL1.H", y = "BL3.H")) + 
+  geom_hex(bins = 80, aes(fill = ..ncount..)) + 
+  facet_grid(Dilution ~ Treatment, 
+             labeller = as_labeller(c("0 mM" = "0 mM", "10 mM" = "10 mM", "100 mM" = "100 mM", "1000 mM" = "1000 mM", 
+                                      "250 x" = "250x", "500 x" = "500x", "1000 x" = "1000x", "2000 x" = "2000x"))) + 
+  theme_minimal()
+p2 + scale_x_logicle() + scale_y_logicle() +
+  xlab("FungaLight Green Fluorescence") + ylab("FungaLight Red Fluorescence") +
+  panel_border(color = "black", size = 1) +
+  theme(axis.line = element_blank(),
+        strip.background = element_blank(),
+        axis.text.x = element_text(size = 10, color = "black"),  # Adjust size and face (bold)
+        axis.text.y = element_text(size = 10, color = "black"),
+        axis.title.x = element_text(size = 16, face = "bold"),
+        axis.title.y = element_text(size = 16, face = "bold")
+        ) + 
+  theme(strip.text = element_text(size = 12, face = "bold")) 
+ggsave("/space/htang5/Documents/FUN1_data_analysis/biol-4386-course-project-htang5/Methods Paper Writing/01-SYTO9-Midlog-Characterization/output/20240119-PI-Dilutions-Raw-Flow-Plot.png", width = 7, height = 5)
+```
+
+```{r}
+sub <- dat.f1[pData(dat.f1)$Dye == "SYTO9" & pData(dat.f1)$Date == "112023"]
+sg <- Subset(sub, singlet.gate)
+p2 <- sg %>% 
+  ggcyto(aes(x = "BL1.H", y = "BL3.H")) + 
+  geom_hex(bins = 80, aes(fill = ..ncount..)) + 
+  facet_grid(Dilution ~ Treatment, 
+             labeller = as_labeller(c("0 mM" = "0 mM", "10 mM" = "10 mM", "100 mM" = "100 mM", "1000 mM" = "1000 mM", 
+                                      "250 x" = "250x", "500 x" = "500x", "1000 x" = "1000x", "2000 x" = "2000x"))) + 
+  theme_minimal()
+p2 + scale_x_logicle() + scale_y_logicle() +
+  xlab("FungaLight Green Fluorescence") + ylab("FungaLight Red Fluorescence") +
+  panel_border(color = "black", size = 1) +
+  theme(axis.line = element_blank(),
+        strip.background = element_blank(),
+        axis.text.x = element_text(size = 10, color = "black"),  # Adjust size and face (bold)
+        axis.text.y = element_text(size = 10, color = "black"),
+        axis.title.x = element_text(size = 16, face = "bold"),
+        axis.title.y = element_text(size = 16, face = "bold")
+        ) + 
+  theme(strip.text = element_text(size = 12, face = "bold")) 
+ggsave("/space/htang5/Documents/FUN1_data_analysis/biol-4386-course-project-htang5/Methods Paper Writing/01-SYTO9-Midlog-Characterization/output/20240110-SYTO9-Dilutions-Raw-Flow-Plot.png", width = 7, height = 5)
+```
+
+# Extract MFI across flowFrames
+>MFI are extracted and wrote into tsv. The tsv is stored in the input folder.
+
+```{r}
+tmp <- fsApply(dat.f1, each_col, median)
+if(all(rownames(tmp) == rownames(sample))){
+  combined_data_f1 <- cbind(pData(dat.f1), tmp) %>% 
+    as.tibble() %>% relocate(name, .after = last_col())
+}
+write_tsv(combined_data_f1, file = "../Input/20231228-fig-1-MFI-ht.tsv")
+print(combined_data_f1)
+```
+
+# Graph Green MFIs against teatment and group by dye concentration
+>Several output graphs are produced. The graphs are include in Figure 1 Panel A.
+
+```{r}
+pf1a <- combined_data_f1 %>%
+  dplyr::filter(Dye == "SYTO9") %>% 
+  dplyr::filter(Treatment == "0 mM") %>%
+  mutate(Dilution = factor(Dilution, levels = c("250 x", "500 x", "1000 x", "2000 x"))) %>%
+  ggplot(aes(x = Dilution, y = BL1.H)) +
+  geom_boxplot() +
+  geom_point(stroke = 1, size = 2, position = position_jitter(0.2)) +
+  theme_minimal()
+pf1a +
+  labs(x = "SYTO9 Dilution (folds from 3.34 mM)", y = "Median Green Fluorescence Intensity") +
+  panel_border(color = "black", size = 1.5) +
+  theme(axis.line = element_blank(),
+        strip.background = element_blank(),
+        axis.text.x = element_text(size = 16, face = "bold", color = "black"),  # Adjust size and face (bold)
+        axis.text.y = element_text(size = 15, face = "bold", color = "black"),
+        axis.title.x = element_text(size = 16, face = "bold"),
+        axis.title.y = element_text(size = 16, face = "bold")
+        )
+ggsave("../output/20231228-SYTO9-Dilutions-Green-MFI-Plot.png", width = 7, height = 5)
+```
+
+> Graph red MFI for various SYTO9 dilutions
+
+
+```{r}
+pf1b <- combined_data_f1 %>%
+  dplyr::filter(Dye == "SYTO9") %>% 
+  dplyr::filter(Treatment == "0 mM") %>%
+  mutate(Dilution = factor(Dilution, levels = c("250 x", "500 x", "1000 x", "2000 x"))) %>%
+  ggplot(aes(x = Dilution, y = BL3.H)) +
+  geom_boxplot() +
+  geom_point(stroke = 1, size = 2, position = position_jitter(0.2)) +
+  theme_minimal()
+pf1b +
+  labs(x = "SYTO9 Dilution (folds from 3.34 mM)", y = "Median Red Fluorescence Intensity") +
+  panel_border(color = "black", size = 1.5) +
+  theme(axis.line = element_blank(),
+        strip.background = element_blank(),
+        axis.text.x = element_text(size = 16, face = "bold", color = "black"),  # Adjust size and face (bold)
+        axis.text.y = element_text(size = 16, face = "bold", color = "black"),
+        axis.title.x = element_text(size = 16, face = "bold"),
+        axis.title.y = element_text(size = 16, face = "bold")
+        )
+ggsave("../output/20231228-SYTO9-Dilutions-Red-MFI-Plot.png", width = 7, height = 5)
+```
+
+> Graph a scatter plot for median red and greens for each population
+No output from this plotting.
+
+```{r}
+combined_data_f1 %>%
+  dplyr::filter(Dye == "SYTO9") %>% 
+  dplyr::filter(Treatment == "0 mM") %>%
+  ggplot(aes(x = BL1.H, y = BL3.H)) +
+  geom_point(aes(color = interaction(Dye, Dilution))) +
+  facet_wrap(~Treatment)
+  #stat_summary(fun.data = "mean_cl_boot", geom = "line", size = 0.2, position = position_nudge(x = 0.1), aes(group = interaction(Dye, Dilution), color = interaction(Dye, Dilution))) +
+  labs(x = "Hydrogen Peroxide Treatment", y = "Median Red Fluorescence") +
+  panel_border(color = "black", size = 1.5) +
+  theme(axis.line = element_blank(),
+        #axis.title.x = element_blank(), 
+        strip.background = element_blank(),
+        axis.text.x = element_text(size = 16, face = "bold"),  # Adjust size and face (bold)
+        axis.text.y = element_text(size = 16, face = "bold"),
+        axis.title.x = element_text(size = 16, face = "bold"),
+        axis.title.y = element_text(size = 16, face = "bold")
+        )
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
