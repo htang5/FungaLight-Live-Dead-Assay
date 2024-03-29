@@ -1,0 +1,160 @@
+---
+title: "Fig 3 Graphs"
+author: Bin He, originally by Hanxi Tang
+date: "2023-09-30 (updated `r Sys.Date()`)"
+output:
+  html_notebook:
+    theme: cerulean
+    toc: true
+    toc_float: true
+    toc_depth: 4
+    code_folding: hide
+---
+
+# Background
+This is the flow cytometry and CFU data for Cg, Sc, Kl. Cg, Sc, Kl treated with 0-1M H2O2 are stained with Fungalight 1, run through flow and plated for CFU (details in HT's ELN). Goal is to correlate Flow vs CFU and generate graphs for figure 3.
+
+```{r setup, message=FALSE}
+require(tidyverse)
+require(flowCore)
+require(flowClust)
+require(openCyto)
+require(ggcyto)
+require(cowplot)
+```
+
+# Import data
+```{r}
+data.path = "/Volumes/rdss_bhe2/User/Hanxi Tang/Flow Cytometry/092923-FungaLight-Cgla-analysis/"
+fs <- read.flowSet(path = data.path, transformation = FALSE,  # the original values are already linearized. 
+                   emptyValue = FALSE,  alter.names = TRUE,   # change parameter names to R format
+                   column.pattern = ".H|FSC|SSC") # only load the height variables for the fluorescent parameters
+fs0 <- fs # make a copy of the original data in case of corruption
+```
+
+Specify the flowSet phenoData
+```{r}
+source("../00-shared/script/20220326-simplify-names-subroutine.R")
+oriNames <- sampleNames(fs)
+tmp <- str_split(oriNames, pattern = "_", simplify = TRUE)[,c(1, 5)] 
+colnames(tmp) <- c("date", "treat") 
+sample <- data.frame(tmp) %>% 
+  mutate(rep = ifelse(str_sub(treat, 1, 1) == "B", "B", "A"),
+         treat = gsub(".fcs", "", treat) %>% gsub("^B ", "", .),
+         H2O2 = case_match(treat,
+                             "1M" ~ "1000",
+                             "Mock" ~ "0",
+                             .default = treat),
+         H2O2 = factor(H2O2, levels = sort(unique(as.numeric(H2O2)))),
+         set = factor(paste0(date, rep)),
+         name = paste(date, rep, H2O2, "mM", sep = "_"))
+rownames(sample) <- oriNames
+pData(fs) <- sample
+sets <- levels(sample$set)
+```
+
+# Exploratory Data Analysis
+Let's take one dataset and visualize the changes in the various parameters
+
+```{r}
+# define the rectangular gate
+cell.filter <- rectangleGate(filterId = "cell", 
+                             "FSC.H" = c(125E3, 100E4),
+                             "SSC.H" = c(0, 750E3))
+```
+
+Plot all sets
+```{r, fig.height=6, fig.width=8}
+png("img/20230930-")
+for(set in sets){
+  sub <- fs[pData(fs)$set == set]
+  # constructor for a list of filters
+  #cell.gates <- sapply(sampleNames(fs), function(sn)cell.filter)
+  p1 <- ggcyto(sub, aes(x = "FSC.H", y = "SSC.H")) + geom_hex(bins = 80) + 
+    geom_gate(cell.filter) +
+    facet_wrap(~H2O2, labeller = "label_both") + theme_minimal() +
+    labs(title = set) +
+    scale_y_continuous(name = "SSC.H (x1000)", labels = function(l) {l/1000}) + 
+    scale_x_continuous(name = "FSC.H (x1000)", labels = function(l) {l/1000})
+  print(p1)
+}
+```
+
+> Two populations are visible in the FSC:SSC plot. The minor population with smaller SSC values are more prominent in the more severely stressed cells.
+
+Try Identifying the two clusters
+```{r}
+tmp.dat <- fs[pData(fs)$set == "091523A" & pData(fs)$H2O2 == 8][[1]]
+tmp.res <- flowClust(
+  tmp.dat,
+  varNames = c("FSC.H", "SSC.H"),
+  K = 2,
+  B = 500
+  )
+```
+
+```{r}
+summary(tmp.res)
+def.par <- par(no.readonly = TRUE) # save defaults, for resetting...
+layout(matrix(c(1,2), ncol = 2))   # divide the figure into two columns
+plot(tmp.res, data = tmp.dat, level = 0.8, z.cutoff = 0)
+plot(density(tmp.res, data = sub[[4]]), type = "image")
+par(def.par)
+```
+
+Let's split the two populations and compare their fluorescence levels
+```{r}
+# creates a filter object to store all settings, but doesn't perform the clustering
+tmp.filter <- tmixFilter(filterId = "fsc-ssc", parameters = c("FSC.H", "SSC.H"), K = 2, B = 500)
+# implement the actual clustering 
+tmp.res2 <- filter(tmp.dat, tmp.filter)
+```
+
+```{r}
+tmp.split <- split(tmp.dat, tmp.res2, population = list(ssc.h = 1, ssc.l = 2)) %>% as("flowSet")
+# get the MFI for each subset
+tmp.median <- fsApply(tmp.split, each_col, median)
+tmp.median
+ggcyto(tmp.split, aes(x = "FSC.H", y = "SSC.H")) + geom_hex(bins = 80) + theme_minimal()
+ggcyto(tmp.split, aes(x = "BL1.H", y = "BL3.H")) + geom_hex(bins = 80) + scale_x_logicle() + scale_y_logicle() +
+  theme_minimal()
+```
+> Interestingly, the SSC High population appear to be live and SSC low population are mostly dead
+> Also of interest is the presence of a subpopulation with very low staining by FungaLight. This population is mostly in the SSC-high, thus live portion of the sample.
+
+To examine the low-staining pop further, I will make a gate on BL1.H and BL3.H
+```{r}
+unstained.filter <- rectangleGate(filterId = "unstained", 
+                                  list("BL1.H" = c(0, 100),
+                                       "BL3.H" = c(0, 100)))
+unstained.res <- filter(tmp.dat, unstained.filter)
+unstained.pop <- split(tmp.dat, unstained.res) %>% as("flowSet")
+ggcyto(unstained.pop, aes(x = "FSC.H")) + geom_density(aes(color = factor(name)), linewidth = 1.5) + 
+  scale_color_manual("Unstained", values = c("unstained-" = "gray20", "unstained+" = "red")) +
+  facet_wrap(~NULL) + theme_minimal(base_size = 16)
+```
+> The unstained population of events seem to be a bit smaller in size compared with the stained population.
+> wonder if this has to do with a transient population of cells with physiological characteristics
+> that make them both smaller and less permeable to both dyes.
+
+```{r, fig.height=6, fig.width=8}
+for(set in sets){
+  sub <- fs[pData(fs)$set == set]
+  # constructor for a list of filters
+  #cell.gates <- sapply(sampleNames(fs), function(sn)cell.filter)
+  p2 <- ggcyto(sub, aes(x = BL1.H, y = BL3.H)) + 
+    geom_hex(aes(fill = after_stat(ncount)), bins = 80) + 
+    facet_wrap(~H2O2, labeller = "label_both") +
+    scale_y_logicle() + scale_x_logicle() +
+    labs(title = set) +
+    theme_minimal()
+  print(p2)
+}
+```
+> We can observe some trends with increasing H2O2 severity, such as an increase in the 
+> dead population (top left), more cells exhibiting a higher green and red within the "live"
+> population, possibly due to increased permeability to SYTO9, which is much more fluorescent
+> than PI. Eventually, the population does migrate to the dead gate. Despite these useful trends
+> however, there is a lot of run-to-run variability, to the point where confident assessment of
+> the patterns is not possible.
+
