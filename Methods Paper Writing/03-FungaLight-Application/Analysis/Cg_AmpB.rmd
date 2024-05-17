@@ -1,0 +1,268 @@
+---
+title: "PI vs PI+SYTO9 Log Correlation"
+output: html_document
+date: "2023-12-18"
+---
+
+# Background
+This is the flow cytometry data for post treatment phase Cg stained with PI+SYTO9, and run through flow cytometry (details in ELN), and plated for CFU. The goal is to establish FungaLight's application after antibiotic stress.
+
+```{r setup, message=FALSE}
+require(tidyverse)
+require(flowCore)
+require(flowClust)
+require(openCyto)
+require(ggcyto)
+require(cowplot)
+require(ggrdiges)
+```
+
+# Import data
+> FCS files are stored in RDSS/user/flow cytometry, FCS is read and write into an input tsv table. The tsv file is avaliable from the Input folder.
+
+```{r}
+# use relative path to make it easier for collaboration
+data.path = "/space/htang5/Documents/20240325-29"
+dat.f1g <- read.flowSet(path = data.path, transformation = FALSE,  # the original values are already linearized. 
+                   emptyValue = FALSE,  alter.names = TRUE,   # change parameter names to R format
+                   column.pattern = ".H|FSC|SSC") # only load the height variables for the fluorescent parameters
+```
+
+Simplify the sample names
+
+```{r}
+require(PTXQC)
+oriNames <- sampleNames(dat.f1g)
+tmp <- str_split(oriNames, pattern = "[ _]+", simplify = TRUE)[,c(1, 6)]
+colnames(tmp) <- c("Date", "Treatment") 
+sample <- data.frame(tmp) %>% 
+  mutate(
+    Treatment = factor(
+      gsub("\\.fcs", "", Treatment),
+      levels = c("0", "0.02", "0.04", "0.06", "0.08", "0.1", "1")))
+rownames(sample) <- oriNames
+pData(dat.f1g) <- sample
+print(pData(dat.f1g))
+write_tsv(pData(dat.f1g), file = "/space/htang5/Documents/FUN1_data_analysis/biol-4386-course-project-htang5/Methods Paper Writing/03-FungaLight-Application/Input/20240403-Cg-AmpB-Correlation-raw-data-ht.tsv")
+```
+
+```
+
+
+# Gatting for Singlets
+>The following gaphing steps are used to gate singlets by FSC and SSC values. Only singlets are included in analysis.
+
+>Gate for outlier
+
+```{r}
+```{r}
+outlier.gate <- rectangleGate(filterId = "-outlier", "FSC.H" = c(1.2e5, 1e6), "SSC.H" = c(1e2, 1e6))
+ggcyto(dat.f1g [1], aes(x = FSC.H, y = SSC.H), subset = "root") +
+  geom_hex(bins = 64) + geom_gate(outlier.gate) + facet_wrap(~name, ncol = 2) + ggcyto_par_set(limits = "instrument")
+```
+```
+
+
+Add gate to GS
+```{r}
+```{r}
+gs <- GatingSet(dat.f1g) # create a GatingSet
+gs_pop_add(gs, outlier.gate, parent = "root")
+recompute(gs)
+```
+```
+
+
+>Gate for singlets
+
+```{r}
+```{r fig.width=4, fig.height=4}
+scPars <- ggcyto_par_set(limits = list(x = c(0,1e6), y = c(30,300)))
+ex <- Subset(dat.f1g[[1]], outlier.gate)
+polygon <- matrix(c(1e5, 1e5, 1e6, 1e6, 
+                    60, 105, 135,60), ncol = 2)
+colnames(polygon) <- c("FSC.H", "FSC.W")
+singlet.gate <- polygonGate(filterId = "singlet", boundaries = polygon)
+ggcyto(ex, aes(x = FSC.H, y = FSC.W)) + geom_hex(bins = 128) + geom_gate(singlet.gate) + geom_stats() + scPars
+```
+```
+Add this gate to the gatingSet
+```{r}
+```{r}
+gs_pop_add(gs, singlet.gate, parent = "-outlier", name = "singlet")
+recompute(gs)
+```
+```
+> Gate for Red Negative Population
+This is the live population with red fluorescence below 10^2.2
+
+```{r}
+```{r}
+scPars <- ggcyto_par_set(limits = list(x = c(0,1e6), y = c(0,1e6)))
+ex <- Subset(dat.f1g, singlet.gate)
+polygon <- matrix(c(0, 10^3, 10^3, 0,
+                    10^2.2, 10^2.2, 0, 0), ncol = 2)
+colnames(polygon) <- c("BL1.H", "BL3.H")
+live.gate <- polygonGate(filterId = "live", boundaries = polygon)
+ggcyto(ex, aes(x = BL1.H, y = BL3.H)) + geom_hex(bins = 128) + geom_gate(live.gate) + geom_stats() + scPars + scale_x_logicle() + scale_y_logicle() + facet_wrap(Treatment ~ Date, ncol = 7, labeller = labeller(.cols = label_both)) 
+```
+```
+
+
+Add this gate to the gatingSet
+
+```{r eval=FALSE, include=FALSE}
+gs_pop_add(gs, live.gate, parent = "singlet", name = "live")
+recompute(gs)
+```
+
+> Gate for Red Positive Intermediates
+This is the intermediate population on the right side
+
+```{r}
+```{r}
+scPars <- ggcyto_par_set(limits = list(x = c(0,1e6), y = c(0,1e6)))
+ex <- Subset(dat.f1g, singlet.gate)
+polygon <- matrix(c(10^3, 10^5, 10^5, 10^3, 
+                      0, 0, 10^4, 10^2), ncol = 2)
+colnames(polygon) <- c("BL1.H", "BL3.H")
+inter.gate <- polygonGate(filterId = "inter", boundaries = polygon)
+ggcyto(ex, aes(x = BL1.H, y = BL3.H)) + geom_hex(bins = 128) + geom_gate(inter.gate) + geom_stats() + scPars + scale_x_logicle() + scale_y_logicle() + facet_wrap(Treatment ~ Date, ncol = 7, labeller = labeller(.cols = label_both)) 
+```
+Add this gate to the gatingSet
+
+```{r eval=FALSE, include=FALSE}
+gs_pop_add(gs, inter.gate, parent = "singlet", name = "inter")
+recompute(gs)
+```
+```
+
+> Gate for Red Positive Dead
+This is the dead population on the right side
+
+```{r}
+scPars <- ggcyto_par_set(limits = list(x = c(0,1e6), y = c(0,1e6)))
+ex <- Subset(dat.f1g, singlet.gate)
+polygon <- matrix(c(10^3, 10^2.5,10^3, 10^5,
+                    10^4.5, 10^2.2, 10^2.2, 10^4), ncol = 2)
+colnames(polygon) <- c("BL1.H", "BL3.H")
+dead.gate <- polygonGate(filterId = "dead", boundaries = polygon)
+ggcyto(ex, aes(x = BL1.H, y = BL3.H)) + geom_hex(bins = 128) + geom_gate(dead.gate) + geom_stats() + scPars + scale_x_logicle() + scale_y_logicle() + facet_wrap(Treatment ~ Date, ncol = 7, labeller = labeller(.cols = label_both)) 
+```
+```
+
+Add this gate to the gatingSet
+
+```{r}
+```{r eval=FALSE, include=FALSE}
+gs_pop_add(gs, dead.gate, parent = "singlet", name = "dead")
+recompute(gs)
+```
+```
+
+
+>Exported gated event counts
+
+```{r}
+```{r}
+gated_stats_f1g <- gs_pop_get_stats(gs) %>% 
+  as_tibble() %>% 
+  mutate(pop = gsub(".*/", "", pop), pop = gsub("-outlier", "cells", pop)) %>% 
+  pivot_wider(names_from = pop, names_prefix = "n_", values_from = count)
+gated_stats_f1g$percent_Dead <- gated_stats_f1g$n_dead / gated_stats_f1g$n_singlet
+gated_stats_f1g$percent_Live <- gated_stats_f1g$n_live / gated_stats_f1g$n_singlet
+gated_stats_f1g$percent_inter <- gated_stats_f1g$n_inter / gated_stats_f1g$n_singlet
+gated_stats_f1g$FGS <- 1*gated_stats_f1g$percent_Live + 0.5*gated_stats_f1g$percent_inter - gated_stats_f1g$percent_Dead
+gated_data <- cbind(pData(dat.f1g), gated_stats_f1g) %>% 
+    as.tibble() %>% relocate(name, .after = last_col())
+write_tsv(gated_data, file = "../Input/20240401-Cg-AmpB-gated-ht.tsv")
+print(gated_data)
+```
+```
+
+
+
+# Output Graph Production
+>Several output graphs are produced, and are stored in the Output folder.
+```{r}
+
+```{r}
+gated_data %>%
+ggplot(aes(x = Treatment, y = FGS)) + 
+  geom_boxplot()+
+  geom_point()+
+  theme_minimal() +
+  labs(x = "Treatment AmphB (ng/ml)",
+       y = "Gated Live Population Percentage") 
+
+#ggsave("../output/20240117-dye-Order-Flow-Plot.png", width = 7, height = 5)
+```
+```
+
+```{r}
+```{r}
+combined_data <- read_tsv("../Input/20240401-Cg-AmpB-gated-CFU-ht.tsv") %>% 
+mutate(Treatment = factor(Treatment, levels = c(0, "5C", 0.6, 6, 1000))) %>% 
+
+p1 <- combined_data %>% 
+   dplyr::filter(!(Treatment %in% c("1", "0")))  %>%
+  ggplot(aes(x = Treatment, y = percent_Live))  + 
+  geom_bar(stat = "summary", fun = "mean", fill = "lightgreen", alpha = 0.7) +
+  geom_point(size = 2, position = position_jitter(0.05)) + 
+  labs(x = bquote(H[2]*O[2]~(mM)), y = "% Live") +
+  ggtitle("PI only") +  
+  theme(plot.title = element_text(hjust = 30)) +
+  theme_cowplot() 
+  
+
+p2 <- combined_data %>% 
+   dplyr::filter(!(Treatment %in% c("1", "0")))  %>%
+  ggplot(aes(x = Treatment, y = CFU_Survival))  + 
+  geom_bar(stat = "summary", fun = "mean", fill = "lightgreen", alpha = 0.7) +
+  geom_point(size = 2, position = position_jitter(0.05)) + 
+  labs(x = bquote(H[2]*O[2]~(mM)), y = "% Live") +
+  ggtitle("CFU") +  
+  theme(plot.title = element_text(hjust = 15)) +
+  theme_cowplot()
+
+combined_plot <- plot_grid(p1, p2, nrow = 1, ncol = 3, common.legend = TRUE, align = 'hv')
+
+print(combined_plot)
+#ggsave("../output/20240329-Ca-Log-Gated.png")
+```
+Correlation Graph Test
+```{r}
+combined_data %>%
+  dplyr::filter(!(Treatment %in% c("1", "0")))   %>% 
+  ggplot(aes(x = percent_Live, y = CFU_Survival, color = Treatment)) + geom_point() + stat_smooth(method = "lm")
+ggplot(combined_data, aes(x = percent_Dead, y = CFU_Survival)) +  geom_point ()
+ggplot(combined_data, aes(x = percent_inter, y = CFU_Survival)) +  geom_point ()
+ggplot(combined_data, aes(x = FGS, y = CFU_Survival)) +  geom_point ()
+```
+
+> Output graph
+
+```{r}
+combined_data %>%
+  mutate(Treatment = paste(Treatment, "ng/ml", sep = " ")) %>% 
+  dplyr::filter(!(Treatment %in% c("1 ng/ml", "0 ng/ml")))   %>% 
+ggplot(aes(x = percent_Live, y = CFU_Survival)) + 
+  geom_point(aes(color = Treatment), size = 3) +
+  stat_smooth(method = "lm") +
+  labs(x = "Gated Live Population Percentage",
+       y = "CFU Survival")  +
+  theme_minimal() +
+  theme(axis.title = element_text(size = 14, face = "bold"),
+        axis.text = element_text(size = 14, face = "bold"),
+        axis.line = element_line(color = "black"),
+        legend.text = element_text(size = 14, face = "bold"), 
+        legend.title = element_text(size = 14, face = "bold")) + scale_color_viridis(discrete = TRUE)
+
+ggsave("../output/20240402-Cg-AmphB.png")
+```
+
+
+
+
+
+

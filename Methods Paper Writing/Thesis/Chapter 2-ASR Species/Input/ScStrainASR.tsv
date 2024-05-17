@@ -1,0 +1,183 @@
+# Date: experiment date									
+# Group: MM = mock primary, mock secondary; MO = mock primary, H2O2 secondary; PM = phosphate starve primary, mock secondary; PO = phosphate starve primary, H2O2 secondary									
+# Len_1: length of primary stress treatment									
+# Len_2: length of secondary stress treatment									
+# Dilutions: dilutions for CFU assay									
+# Count: raw counts on CFU plates									
+Date	Species	Strain	Genotype	Group	Len_1	Len_2	H2O2	Dilutions	Count
+6/20/23A	Lab Sc	yH154	wildtype	MM	45 min	2 hr	0mM	1000	246
+6/20/23A	Lab Sc	yH154	wildtype	MO	45 min	2 hr	3mM	100	172
+6/20/23A	Lab Sc	yH154	wildtype	PM	45 min	2 hr	0mM	1000	201
+6/20/23A	Lab Sc	yH154	wildtype	PO	45 min	2 hr	3mM	100	125
+6/20/23B	Lab Sc	yH154	wildtype	MM	45 min	2 hr	0mM	1000	245
+6/20/23B	Lab Sc	yH154	wildtype	MO	45 min	2 hr	3mM	100	163
+6/20/23B	Lab Sc	yH154	wildtype	PM	45 min	2 hr	0mM	1000	235
+6/20/23B	Lab Sc	yH154	wildtype	PO	45 min	2 hr	3mM	100	135
+6/20/23C	Lab Sc	yH154	wildtype	MM	45 min	2 hr	0mM	1000	194
+6/20/23C	Lab Sc	yH154	wildtype	MO	45 min	2 hr	3mM	100	150
+6/20/23C	Lab Sc	yH154	wildtype	PM	45 min	2 hr	0mM	1000	202
+6/20/23C	Lab Sc	yH154	wildtype	PO	45 min	2 hr	3mM	100	116
+6/21/23A	Lab Sc	yH154	wildtype	MM	45 min	2 hr	0mM	1000	222
+6/21/23A	Lab Sc	yH154	wildtype	MO	45 min	2 hr	3mM	100	166
+6/21/23A	Lab Sc	yH154	wildtype	PM	45 min	2 hr	0mM	1000	202
+6/21/23A	Lab Sc	yH154	wildtype	PO	45 min	2 hr	3mM	100	138
+6/21/23B	Lab Sc	yH154	wildtype	MM	45 min	2 hr	0mM	1000	199
+6/21/23B	Lab Sc	yH154	wildtype	MO	45 min	2 hr	3mM	100	134
+6/21/23B	Lab Sc	yH154	wildtype	PM	45 min	2 hr	0mM	1000	247
+6/21/23B	Lab Sc	yH154	wildtype	PO	45 min	2 hr	3mM	100	182
+6/21/23C	Lab Sc	yH154	wildtype	MM	45 min	2 hr	0mM	1000	355
+6/21/23C	Lab Sc	yH154	wildtype	MO	45 min	2 hr	3mM	100	201
+6/21/23C	Lab Sc	yH154	wildtype	PM	45 min	2 hr	0mM	1000	209
+6/21/23C	Lab Sc	yH154	wildtype	PO	45 min	2 hr	3mM	100	164
+6/14/23	Sake Sc	yH711	wildtype	MM	45 min	2 hr	0mM	1000	157
+6/14/23	Sake Sc	yH711	wildtype	MO	45 min	2 hr	1mM	100	596
+6/14/23	Sake Sc	yH711	wildtype	MO	45 min	2 hr	1.5mM	100	17
+6/14/23	Sake Sc	yH711	wildtype	MO	45 min	2 hr	2mM	100	8
+6/14/23	Sake Sc	yH711	wildtype	PM	45 min	2 hr	0mM	1000	231
+6/14/23	Sake Sc	yH711	wildtype	PO	45 min	2 hr	1mM	100	256
+6/14/23	Sake Sc	yH711	wildtype	PO	45 min	2 hr	1.5mM	100	3
+6/14/23	Sake Sc	yH711	wildtype	PO	45 min	2 hr	2mM	100	1
+6/16/23	Sake Sc	yH711	wildtype	MM	45 min	2 hr	0mM	1000	138
+6/16/23	Sake Sc	yH711	wildtype	MO	45 min	2 hr	1mM	100	64
+6/16/23	Sake Sc	yH711	wildtype	MO	45 min	2 hr	1.2mM	100	21
+6/16/23	Sake Sc	yH711	wildtype	MO	45 min	2 hr	1.4mM	100	28
+6/16/23	Sake Sc	yH711	wildtype	MO	45 min	2 hr	1.6mM	100	8
+6/16/23	Sake Sc	yH711	wildtype	MO	45 min	2 hr	1.8mM	100	1
+6/16/23	Sake Sc	yH711	wildtype	PM	45 min	2 hr	0mM	1000	136
+6/16/23	Sake Sc	yH711	wildtype	PO	45 min	2 hr	1mM	100	9
+6/16/23	Sake Sc	yH711	wildtype	PO	45 min	2 hr	1.2mM	100	5
+6/16/23	Sake Sc	yH711	wildtype	PO	45 min	2 hr	1.4mM	100	6
+6/16/23	Sake Sc	yH711	wildtype	PO	45 min	2 hr	1.6mM	100	5
+6/16/23	Sake Sc	yH711	wildtype	PO	45 min	2 hr	1.8mM	100	1
+6/19/23	Sake Sc	yH711	wildtype	MM	45 min	2 hr	0mM	1000	172
+6/19/23	Sake Sc	yH711	wildtype	MO	45 min	2 hr	0.8mM	100	102
+6/19/23	Sake Sc	yH711	wildtype	MO	45 min	2 hr	1mM	100	31
+6/19/23	Sake Sc	yH711	wildtype	MO	45 min	2 hr	1.2mM	100	23
+6/19/23	Sake Sc	yH711	wildtype	MO	45 min	2 hr	1.4mM	100	9
+6/19/23	Sake Sc	yH711	wildtype	MO	45 min	2 hr	1.6mM	100	11
+6/19/23	Sake Sc	yH711	wildtype	PM	45 min	2 hr	0mM	1000	160
+6/19/23	Sake Sc	yH711	wildtype	PO	45 min	2 hr	0.8mM	100	26
+6/19/23	Sake Sc	yH711	wildtype	PO	45 min	2 hr	1mM	100	13
+6/19/23	Sake Sc	yH711	wildtype	PO	45 min	2 hr	1.2mM	100	11
+6/19/23	Sake Sc	yH711	wildtype	PO	45 min	2 hr	1.4mM	100	9
+6/19/23	Sake Sc	yH711	wildtype	PO	45 min	2 hr	1.6mM	100	8
+06/20/23	Sake Sc	yH711	wildtype	MM	45 min	2 hr	0mM	1000	168
+06/20/23	Sake Sc	yH711	wildtype	MO	45 min	2 hr	0.8mM	100	281
+06/20/23	Sake Sc	yH711	wildtype	MO	45 min	2 hr	1mM	100	193
+06/20/23	Sake Sc	yH711	wildtype	MO	45 min	2 hr	1.2mM	100	53
+06/20/23	Sake Sc	yH711	wildtype	PM	45 min	2 hr	0mM	1000	157
+06/20/23	Sake Sc	yH711	wildtype	PO	45 min	2 hr	0.8mM	100	114
+06/20/23	Sake Sc	yH711	wildtype	PO	45 min	2 hr	1mM	100	105
+06/20/23	Sake Sc	yH711	wildtype	PO	45 min	2 hr	1.2mM	100	30
+06/21/23	Sake Sc	yH711	wildtype	MM	45 min	2 hr	0mM	1000	98
+06/21/23	Sake Sc	yH711	wildtype	MO	45 min	2 hr	1mM	100	566
+06/21/23	Sake Sc	yH711	wildtype	PM	45 min	2 hr	0mM	1000	131
+06/21/23	Sake Sc	yH711	wildtype	PO	45 min	2 hr	1mM	100	450
+06/07/23	Sc wine 1	yH709	wildtype	MM	45 min	2 hr	0mM	1000	180
+06/07/23	Sc wine 1	yH709	wildtype	MO	45 min	2 hr	2mM	100	213
+06/07/23	Sc wine 1	yH709	wildtype	MO	45 min	2 hr	4mM	100	118
+06/07/23	Sc wine 1	yH709	wildtype	MO	45 min	2 hr	6mM	100	92
+06/07/23	Sc wine 1	yH709	wildtype	MO	45 min	2 hr	8mM	100	9
+06/07/23	Sc wine 1	yH709	wildtype	MO	45 min	2 hr	10mM	100	0
+06/07/23	Sc wine 1	yH709	wildtype	PM	45 min	2 hr	0mM	1000	120
+06/07/23	Sc wine 1	yH709	wildtype	PO	45 min	2 hr	2mM	100	293
+06/07/23	Sc wine 1	yH709	wildtype	PO	45 min	2 hr	4mM	100	147
+06/07/23	Sc wine 1	yH709	wildtype	PO	45 min	2 hr	6mM	100	98
+06/07/23	Sc wine 1	yH709	wildtype	PO	45 min	2 hr	8mM	100	26
+06/07/23	Sc wine 1	yH709	wildtype	PO	45 min	2 hr	10mM	100	4
+06/08/23	Sc wine 1	yH709	wildtype	MM	45 min	2 hr	0mM	1000	244
+06/08/23	Sc wine 1	yH709	wildtype	MO	45 min	2 hr	2mM	100	208
+06/08/23	Sc wine 1	yH709	wildtype	MO	45 min	2 hr	4mM	100	92
+06/08/23	Sc wine 1	yH709	wildtype	MO	45 min	2 hr	6mM	100	28
+06/08/23	Sc wine 1	yH709	wildtype	MO	45 min	2 hr	8mM	100	12
+06/08/23	Sc wine 1	yH709	wildtype	MO	45 min	2 hr	10mM	100	4
+06/08/23	Sc wine 1	yH709	wildtype	PM	45 min	2 hr	0mM	1000	238
+06/08/23	Sc wine 1	yH709	wildtype	PO	45 min	2 hr	2mM	100	335
+06/08/23	Sc wine 1	yH709	wildtype	PO	45 min	2 hr	4mM	100	121
+06/08/23	Sc wine 1	yH709	wildtype	PO	45 min	2 hr	6mM	100	63
+06/08/23	Sc wine 1	yH709	wildtype	PO	45 min	2 hr	8mM	100	18
+06/08/23	Sc wine 1	yH709	wildtype	PO	45 min	2 hr	10mM	100	5
+06/12/23	Sc wine 1	yH709	wildtype	MM	45 min	2 hr	0mM	1000	183
+06/12/23	Sc wine 1	yH709	wildtype	MO	45 min	2 hr	4mM	100	131
+06/12/23	Sc wine 1	yH709	wildtype	MO	45 min	2 hr	6mM	100	29
+06/12/23	Sc wine 1	yH709	wildtype	MO	45 min	2 hr	8mM	100	28
+06/12/23	Sc wine 1	yH709	wildtype	PM	45 min	2 hr	0mM	1000	169
+06/12/23	Sc wine 1	yH709	wildtype	PO	45 min	2 hr	4mM	100	100
+06/12/23	Sc wine 1	yH709	wildtype	PO	45 min	2 hr	6mM	100	12
+06/12/23	Sc wine 1	yH709	wildtype	PO	45 min	2 hr	8mM	100	7
+06/14/23	Sc wine 1	yH709	wildtype	MM	45 min	2 hr	0mM	1000	152
+06/14/23	Sc wine 1	yH709	wildtype	MO	45 min	2 hr	4mM	100	296
+06/14/23	Sc wine 1	yH709	wildtype	MO	45 min	2 hr	6mM	100	72
+06/14/23	Sc wine 1	yH709	wildtype	MO	45 min	2 hr	8mM	100	28
+06/14/23	Sc wine 1	yH709	wildtype	PM	45 min	2 hr	0mM	1000	182
+06/14/23	Sc wine 1	yH709	wildtype	PO	45 min	2 hr	4mM	100	300
+06/14/23	Sc wine 1	yH709	wildtype	PO	45 min	2 hr	6mM	100	65
+06/14/23	Sc wine 1	yH709	wildtype	PO	45 min	2 hr	8mM	100	16
+06/16/23	Sc wine 1	yH709	wildtype	MM	45 min	2 hr	0mM	1000	248
+06/16/23	Sc wine 1	yH709	wildtype	MO	45 min	2 hr	4mM	100	9
+06/16/23	Sc wine 1	yH709	wildtype	MO	45 min	2 hr	6mM	100	6
+06/16/23	Sc wine 1	yH709	wildtype	MO	45 min	2 hr	8mM	100	1
+06/16/23	Sc wine 1	yH709	wildtype	PM	45 min	2 hr	0mM	1000	173
+06/16/23	Sc wine 1	yH709	wildtype	PO	45 min	2 hr	4mM	100	46
+06/16/23	Sc wine 1	yH709	wildtype	PO	45 min	2 hr	6mM	100	7
+06/16/23	Sc wine 1	yH709	wildtype	PO	45 min	2 hr	8mM	100	2
+06/19/23	Sc wine 1	yH709	wildtype	MM	45 min	2 hr	0mM	1000	305
+06/19/23	Sc wine 1	yH709	wildtype	MO	45 min	2 hr	4mM	100	22
+06/19/23	Sc wine 1	yH709	wildtype	MO	45 min	2 hr	6mM	100	1
+06/19/23	Sc wine 1	yH709	wildtype	MO	45 min	2 hr	8mM	100	1
+06/19/23	Sc wine 1	yH709	wildtype	PM	45 min	2 hr	0mM	1000	261
+06/19/23	Sc wine 1	yH709	wildtype	PO	45 min	2 hr	4mM	100	32
+06/19/23	Sc wine 1	yH709	wildtype	PO	45 min	2 hr	6mM	100	1
+06/19/23	Sc wine 1	yH709	wildtype	PO	45 min	2 hr	8mM	100	1
+06/07/23	yjm sc	yH118	wt	MM	45 min	2 hr	0 mM	1000	149
+06/07/23	yjm sc	yH118	wt	MO	45 min	2 hr	2mM	100	252
+06/07/23	yjm sc	yH118	wt	MO	45 min	2 hr	4mM	100	212
+06/07/23	yjm sc	yH118	wt	MO	45 min	2 hr	6mM	100	136
+06/07/23	yjm sc	yH118	wt	MO	45 min	2 hr	8mM	100	159
+06/07/23	yjm sc	yH118	wt	MO	45 min	2 hr	10mM	100	75
+06/07/23	yjm sc	yH118	wt	PM	45 min	2 hr	0 mM	1000	159
+06/07/23	yjm sc	yH118	wt	PO	45 min	2 hr	2mM	100	214
+06/07/23	yjm sc	yH118	wt	PO	45 min	2 hr	4mM	100	158
+06/07/23	yjm sc	yH118	wt	PO	45 min	2 hr	6mM	100	107
+06/07/23	yjm sc	yH118	wt	PO	45 min	2 hr	8mM	100	86
+06/07/23	yjm sc	yH118	wt	PO	45 min	2 hr	10mM	100	32
+06/08/23	yjm sc	yH118	wt	MM	45 min	2 hr	0 mM	1000	212
+06/08/23	yjm sc	yH118	wt	MO	45 min	2 hr	2mM	100	233
+06/08/23	yjm sc	yH118	wt	MO	45 min	2 hr	4mM	100	141
+06/08/23	yjm sc	yH118	wt	MO	45 min	2 hr	6mM	100	93
+06/08/23	yjm sc	yH118	wt	MO	45 min	2 hr	8mM	100	80
+06/08/23	yjm sc	yH118	wt	MO	45 min	2 hr	10mM	100	69
+06/08/23	yjm sc	yH118	wt	PM	45 min	2 hr	0 mM	1000	189
+06/08/23	yjm sc	yH118	wt	PO	45 min	2 hr	2mM	100	197
+06/08/23	yjm sc	yH118	wt	PO	45 min	2 hr	4mM	100	149
+06/08/23	yjm sc	yH118	wt	PO	45 min	2 hr	6mM	100	98
+06/08/23	yjm sc	yH118	wt	PO	45 min	2 hr	8mM	100	81
+06/08/23	yjm sc	yH118	wt	PO	45 min	2 hr	10mM	100	26
+06/12/23	yjm sc	yH118	wt	MM	45 min	2 hr	0 mM	1000	356
+06/12/23	yjm sc	yH118	wt	MO	45 min	2 hr	10mM	100	275
+06/12/23	yjm sc	yH118	wt	PM	45 min	2 hr	0 mM	1000	298
+06/12/23	yjm sc	yH118	wt	PO	45 min	2 hr	10mM	100	103
+06/14/23	yjm sc	yH118	wt	MM	45 min	2 hr	0 mM	1000	163
+06/14/23	yjm sc	yH118	wt	MO	45 min	2 hr	6mM	100	227
+06/14/23	yjm sc	yH118	wt	MO	45 min	2 hr	8mM	100	154
+06/14/23	yjm sc	yH118	wt	MO	45 min	2 hr	10mM	100	178
+06/14/23	yjm sc	yH118	wt	PM	45 min	2 hr	0 mM	1000	203
+06/14/23	yjm sc	yH118	wt	PO	45 min	2 hr	6mM	100	187
+06/14/23	yjm sc	yH118	wt	PO	45 min	2 hr	8mM	100	171
+06/14/23	yjm sc	yH118	wt	PO	45 min	2 hr	10mM	100	94
+06/16/23	yjm sc	yH118	wt	MM	45 min	2 hr	0 mM	1000	178
+06/16/23	yjm sc	yH118	wt	MO	45 min	2 hr	6mM	100	143
+06/16/23	yjm sc	yH118	wt	MO	45 min	2 hr	8mM	100	88
+06/16/23	yjm sc	yH118	wt	MO	45 min	2 hr	10mM	100	62
+06/16/23	yjm sc	yH118	wt	PM	45 min	2 hr	0 mM	1000	152
+06/16/23	yjm sc	yH118	wt	PO	45 min	2 hr	6mM	100	80
+06/16/23	yjm sc	yH118	wt	PO	45 min	2 hr	8mM	100	99
+06/16/23	yjm sc	yH118	wt	PO	45 min	2 hr	10mM	100	57
+06/19/23	yjm sc	yH118	wt	MM	45 min	2 hr	0 mM	1000	222
+06/19/23	yjm sc	yH118	wt	MO	45 min	2 hr	6mM	100	27
+06/19/23	yjm sc	yH118	wt	MO	45 min	2 hr	8mM	100	29
+06/19/23	yjm sc	yH118	wt	MO	45 min	2 hr	10mM	100	17
+06/19/23	yjm sc	yH118	wt	PM	45 min	2 hr	0 mM	1000	239
+06/19/23	yjm sc	yH118	wt	PO	45 min	2 hr	6mM	100	33
+06/19/23	yjm sc	yH118	wt	PO	45 min	2 hr	8mM	100	32
+06/19/23	yjm sc	yH118	wt	PO	45 min	2 hr	10mM	100	27

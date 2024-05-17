@@ -1,0 +1,258 @@
+---
+title: "Midlog Count"
+output: html_document
+date: "2023-12-18"
+---
+
+# Background
+This is the flow cytometry data for miglog phase Cg stained with PI/SYTO9/PI+SYTO9 in different staining buffers, and run through flow cytometry (details in ELN). The goal is to establish FungaLight's staining pattern in various staining buffers.
+
+```{r setup, message=FALSE}
+require(tidyverse)
+require(flowCore)
+require(flowClust)
+require(openCyto)
+require(ggcyto)
+require(cowplot)
+require(ggrdiges)
+```
+
+# Import data
+> FCS files are stored in RDSS/user/flow cytometry, FCS is read and write into an input tsv table. The tsv file is avaliable from the Input folder.
+
+```{r}
+# use relative path to make it easier for collaboration
+data.path = "/space/htang5/Documents/20240506-08"
+dat.f1e <- read.flowSet(path = data.path, transformation = FALSE,  # the original values are already linearized. 
+                   emptyValue = FALSE,  alter.names = TRUE,   # change parameter names to R format
+                   column.pattern = ".H|FSC|SSC") # only load the height variables for the fluorescent parameters
+```
+
+Simplify the sample names
+
+```{r}
+require(PTXQC)
+oriNames <- sampleNames(dat.f1e)
+tmp <- str_split(oriNames, pattern = "[ _]+", simplify = TRUE)[,c(1, 6)] 
+colnames(tmp) <- c("Date", "Buffer") 
+sample <- data.frame(tmp) %>% 
+  mutate(
+  Buffer = ifelse(Buffer == "sa.fcs", "Saline", ifelse(Buffer == "pbs.fcs", "PBS", ifelse(Buffer == "water.fcs", "ddH2O", "SC")))
+  )
+rownames(sample) <- oriNames
+pData(dat.f1e) <- sample
+print(pData(dat.f1e))
+write_tsv(pData(dat.f1e), file = "../Input/20240510-buffer-count-raw-data-ht.tsv")
+```
+
+# Gatting for Singlets
+>The following gaphing steps are used to gate singlets by FSC and SSC values. Only singlets are included in analysis.
+
+>Gate for outlier 
+
+```{r}
+outlier.gate <- rectangleGate(filterId = "-outlier", "FSC.H" = c(1.2e5, 1e6), "SSC.H" = c(1e2, 1e6))
+ggcyto(dat.f1e [1], aes(x = FSC.H, y = SSC.H), subset = "root") +
+  geom_hex(bins = 64) + geom_gate(outlier.gate) + facet_wrap(~name, ncol = 2) + ggcyto_par_set(limits = "instrument")
+```
+Add gate to GS
+```{r}
+gs <- GatingSet(dat.f1e) # create a GatingSet
+gs_pop_add(gs, outlier.gate, parent = "root")
+recompute(gs)
+```
+
+>Gate for singlets
+
+```{r fig.width=4, fig.height=4}
+scPars <- ggcyto_par_set(limits = list(x = c(0,1e6), y = c(30,300)))
+ex <- Subset(dat.f1e[[1]], outlier.gate)
+polygon <- matrix(c(1e5, 1e5, 1e6, 1e6, 
+                    60, 105, 135,60), ncol = 2)
+colnames(polygon) <- c("FSC.H", "FSC.W")
+singlet.gate <- polygonGate(filterId = "singlet", boundaries = polygon)
+ggcyto(ex, aes(x = FSC.H, y = FSC.W)) + geom_hex(bins = 128) + geom_gate(singlet.gate) + geom_stats() + scPars
+```
+
+
+Add this gate to the gatingSet
+```{r}
+gs_pop_add(gs, singlet.gate, parent = "-outlier", name = "singlet")
+recompute(gs)
+```
+
+# Gate for Unstained population
+> Unstained population is defined as population below 10^2 in both channels (in the noise range).
+
+```{r fig.width=4, fig.height=4}
+scPars <- ggcyto_par_set(limits = list(x = c(0,1e6), y = c(0,1e6)))
+ex <- Subset(dat.f1e[[7]], singlet.gate)
+polygon2 <- matrix(c(0, 1e2, 1e2, 0,
+                    0, 0, 1e2, 1e2), ncol = 2)
+colnames(polygon2) <- c("BL1.H", "BL3.H")
+unstained.gate <- polygonGate(filterId = "unstained", boundaries = polygon2)
+ggcyto(ex, aes(x = BL1.H, y = BL3.H)) + geom_hex(bins = 128) + geom_gate(unstained.gate) + geom_stats() + scPars + scale_x_logicle() + scale_y_logicle() 
+```
+Add this gate to the gatingSet
+
+```{r eval=FALSE, include=FALSE}
+gs_pop_add(gs, unstained.gate, parent = "singlet", name = "unstained")
+recompute(gs)
+```
+
+# Gate for Dead population
+> Dead population is defined based on 1M treated sample.
+
+```{r fig.width=4, fig.height=4}
+scPars <- ggcyto_par_set(limits = list(x = c(0,1e6), y = c(0,1e6)))
+ex <- Subset(dat.f1e[[11]], singlet.gate)
+polygon <- matrix(c(10^3, 10^2.5,10^3, 10^5,
+                    10^4.5, 10^2.2, 10^2.2, 10^4), ncol = 2)
+colnames(polygon) <- c("BL1.H", "BL3.H")
+dead.gate <- polygonGate(filterId = "dead", boundaries = polygon)
+ggcyto(ex, aes(x = BL1.H, y = BL3.H)) + geom_hex(bins = 128) + geom_gate(dead.gate) + geom_stats() + scPars + scale_x_logicle() + scale_y_logicle() 
+```
+Add this gate to the gatingSet
+
+```{r eval=FALSE, include=FALSE}
+gs_pop_add(gs, dead.gate, parent = "singlet", name = "dead")
+recompute(gs)
+```
+
+>Exported gated event counts
+
+```{r}
+gated_stats_f1g <- gs_pop_get_stats(gs) %>% 
+  as_tibble() %>% 
+  mutate(pop = gsub(".*/", "", pop), pop = gsub("-outlier", "cells", pop)) %>% 
+  pivot_wider(names_from = pop, names_prefix = "n_", values_from = count)
+gated_stats_f1g$percent_Cells <- gated_stats_f1g$n_cells / gated_stats_f1g$n_root
+gated_stats_f1g$plated_Cells <- gated_stats_f1g$n_cells / 8
+gated_data <- cbind(pData(dat.f1e), gated_stats_f1g) %>% 
+    as.tibble() %>% relocate(name, .after = last_col())
+write_tsv(gated_data, file = "../Input/20240510-Ca-Cell-count-gated-ht.tsv")
+print(gated_data)
+```
+
+# Output Graph Production
+>Several output graphs are produced, and are stored in the Output folder.
+
+```{r}
+combined_data <- read_tsv("../Input/20240510-Cell-count-gated-CFU.tsv")
+combined_data$CFU_Adjusted <- combined_data$CFU * 8
+combined_data$Ratio <- combined_data$CFU_Adjusted / combined_data$n_cells
+
+combined_data %>%
+  #mutate(Treatment = paste(Treatment, "ng/ml", sep = " ")) %>% 
+  #dplyr::filter(!(Treatment %in% c("1 ng/ml", "0 ng/ml")))   %>% 
+ggplot(aes(x = , y = n_cells)) + 
+  geom_point() +
+  stat_smooth(method = "lm") +
+  labs(x = "Gated Live Population Percentage",
+       y = "CFU Survival")  +
+  theme_minimal() +
+  theme(axis.title = element_text(size = 14, face = "bold"),
+        axis.text = element_text(size = 14, face = "bold"),
+        axis.line = element_line(color = "black"),
+        legend.text = element_text(size = 14, face = "bold"), 
+        legend.title = element_text(size = 14, face = "bold")) 
+
+#ggsave("../output/20240402-Cg-AmphB.png")
+```
+```{r}
+p1 <- combined_data %>% 
+  #dplyr::filter(Dye == "Both") %>% 
+  #dplyr::filter(Treatment == "0 mM") %>% 
+   mutate(Buffer = factor(Buffer, labels = c( "Water", "PBS", "Saline",  "SC"))) %>%
+  ggplot(aes(x = Buffer, y = Ratio))  + 
+  geom_bar(stat = "summary", fun = "mean", fill = "lightgreen", alpha = 0.7) +
+  scale_y_continuous() +
+  geom_point(size = 3, position = position_jitter(0.05)) + 
+  labs(x = "Staining Buffer", y = "CFU : Cell Count") +
+  theme_cowplot(font_size = 18) 
+  
+
+p2 <- combined_data %>% 
+  #dplyr::filter(Dye == "Both") %>% 
+  #dplyr::filter(Treatment == "0 mM") %>% 
+   mutate(Buffer = factor(Buffer, labels = c( "Water", "PBS", "Saline",  "SC"))) %>%
+  ggplot(aes(x = Buffer, y = CFU))  + 
+  geom_bar(stat = "summary", fun = "mean", fill = "lightgreen", alpha = 0.7) +
+  geom_point(size = 3, position = position_jitter(0.05)) + 
+  labs(x = "Staining Buffer", y = "% Dead-like") +
+  theme_cowplot(font_size = 18) 
+
+combined_plot <- plot_grid(p1, p2, nrow = 1, ncol = 2)
+
+print(combined_plot)
+ggsave("../output/20240512-buffer.png")
+```
+```
+
+```{r}
+sub <- dat.f1e[pData(dat.f1e)$Dye == "SYTO9" & pData(dat.f1e)$Date == "010824"] 
+sg <- Subset(sub, singlet.gate)
+p2 <- sg %>% 
+  ggcyto(aes(x = "BL1.H", y = "BL3.H")) + 
+  geom_hex(bins = 80, aes(fill = ..ncount..)) + 
+  facet_grid(Buffer ~ Treatment, 
+             labeller = as_labeller(c("0 mM" = "0 mM", "10 mM" = "10 mM", "100 mM" = "100 mM", "1000 mM" = "1000 mM",
+                                      "Saline" = "0.85% Saline", "PBS" = "PBS", "ddH2O" = "DI Water", "sc complete" = "sc Media")))  + 
+  theme_minimal()
+p2 + scale_x_logicle() + scale_y_logicle() +
+  xlab("FungaLight Green Fluorescence") + ylab("FungaLight Red Fluorescence") +
+  panel_border(color = "black", size = 1) +
+  theme(axis.line = element_blank(),
+        strip.background = element_blank(),
+        axis.text.x = element_text(size = 10, color = "black"),  # Adjust size and face (bold)
+        axis.text.y = element_text(size = 10, color = "black"),
+        axis.title.x = element_text(size = 16, face = "bold"),
+        axis.title.y = element_text(size = 16, face = "bold")
+        ) + 
+  theme(strip.text = element_text(size = 9, face = "bold")) 
+ggsave("../output/20240111-SYTO9-Buffers-Flow-Plot.png", width = 7, height = 5)
+```
+
+```{r}
+sub <- dat.f1e[pData(dat.f1e)$Dye == "Both" & pData(dat.f1e)$Date == "010824"] 
+sg <- Subset(sub, singlet.gate)
+p2 <- sg %>% 
+  ggcyto(aes(x = "BL1.H", y = "BL3.H")) + 
+  geom_hex(bins = 80, aes(fill = ..ncount..)) + 
+  geom_gate(unstained.gate)  + 
+  geom_stats(adjust = c(50, 0.5)) +  # Limiting to two decimals
+  facet_grid(Buffer ~ Treatment, 
+             labeller = as_labeller(c("0 mM" = "0 mM", "10 mM" = "10 mM", "100 mM" = "100 mM", "1000 mM" = "1000 mM",
+                                      "Saline" = "0.85% Saline", "PBS" = "PBS", "ddH2O" = "DI Water", "sc complete" = "Media"))) +
+  theme_minimal()
+p2 + scale_x_logicle() + scale_y_logicle() +
+  xlab("FungaLight Green Fluorescence") + ylab("FungaLight Red Fluorescence") +
+  panel_border(color = "black", size = 1) +
+  theme(axis.line = element_blank(),
+        strip.background = element_blank(),
+        axis.text.x = element_text(size = 10, color = "black"),  # Adjust size and face (bold)
+        axis.text.y = element_text(size = 10, color = "black"),
+        axis.title.x = element_text(size = 16, face = "bold"),
+        axis.title.y = element_text(size = 16, face = "bold")
+        ) + 
+  theme(strip.text = element_text(size = 9, face = "bold")) 
+ggsave("../output/20240409-Buffers-unstained-Flow-Plot.png", width = 7, height = 5)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

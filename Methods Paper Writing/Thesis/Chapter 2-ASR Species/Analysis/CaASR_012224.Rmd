@@ -1,0 +1,165 @@
+---
+title: "Plot CTA1 comp ASR"
+output: html_document
+date: "2023-08-05"
+---
+# Import data
+```{r}
+library(tidyverse)
+raw <- read.table("/space/htang5/Downloads/Thesis/Chapter 2-ASR Species/Input/CaASR-CH2.tsv", sep="\t", header=TRUE)
+ print(raw)
+```
+
+```{r}
+library(dplyr)
+tmp <-  raw %>%
+  mutate(
+    scaled = Count * Dilutions * 1e-2
+  ) %>% 
+  # remove uninformative columns. only one H2O2 conc used for each species
+  select(-Len_1, -Len_2)
+dat.f3 <- tmp %>% 
+  # group by primary to calculate r (MO/MM) or r' (PO/PM)
+  separate(Group, into = c("Primary", "Secondary"), sep = 1) %>% 
+  group_by(Date, Strain, Primary) %>% 
+  # calculate % survival
+  mutate(scaled_M = scaled[Secondary == "M"],
+         r = num(scaled / scaled[Secondary == "M"], digits = 3))%>% 
+   #filter(Secondary != "M") %>%
+  #pivot_wider(id_cols = c(Date, Strain, Species, H2O2), 
+              #names_from = Primary, values_from = r, names_prefix = "r") %>% 
+  #mutate(ASR_score = rP / rM) %>%
+mutate(Label = paste(Strain, H2O2, sep = "_")) %>%
+print(dat.f3)
+#write_tsv(dat.f3, file = "/space/htang5/Downloads/CaASR-Ch2-Calculated.tsv")
+```
+
+
+### Plot (all data)
+```{r}
+library(ggplot2)
+require(tidyverse)
+require(cowplot)
+require(broom)
+
+dat.f3 %>% 
+  mutate( Primary = factor(Primary, levels = c("M", "P"), 
+                     labels = c("Mock", "-Pi")),
+        Species = factor(Species, levels = c("Ca", "Cg", "Sc"),
+                      labels = c("C. albicans", "C. glabrata", "S. cerevisiae")),
+        H2O2 = paste(H2O2, " mM")
+  ) %>%
+  filter(Label %in% c("yH714_6", "yH154_4")) %>%
+  ggplot(aes(x = Primary, y = r)) + 
+  geom_point(aes(shape = Primary), stroke = 1, size = 2, 
+             position = position_dodge(0.9)) +
+  stat_summary(aes(group = Primary), position = position_dodge(0.9),
+               fun = mean, fun.max = mean, fun.min = mean,
+               geom = "crossbar", color = "red", width = 0.5) +
+  facet_wrap(~ Species + H2O2, nrow = 1, scales = "free_x") +
+  scale_shape_manual(values = c("Mock" = 1, "-Pi" = 16)) +
+  scale_y_continuous(limits = c(0, 0.2), labels = scales::percent) +
+  xlab("Primary stress (45 min)") + ylab("% survival") +
+  panel_border(color = "black", size = 1.5) +
+  theme(axis.line = element_blank(),
+        axis.title.x = element_blank(), 
+        strip.background = element_blank(),
+        axis.text.x = element_text(size = 12, face = "bold", color = "black"),  # Adjust size and face (bold)
+        axis.text.y = element_text(size = 12, face = "bold", color = "black"),
+        axis.title.y = element_text(size = 12, face = "bold")
+        )+ 
+  theme(strip.text = element_text(size = 14, face = "bold")) 
+ggsave("/space/htang5/Downloads/Thesis/Chapter 2-ASR Species/Output/20240122-CaASR-Plot.png")
+```
+>Plot Basal Survival
+
+```{r}
+dat.f3 %>% 
+  dplyr::filter(Species %in% c("Ca", "Sc")) %>% 
+  dplyr::filter(H2O2 %in% c("2", "4", "6"))  %>%
+  mutate( Primary = factor(Primary, levels = c("M", "P"), 
+                     labels = c("Mock", "-Pi")),
+        H2O2 = paste(H2O2, " mM")
+  ) %>%
+  ggplot(aes(x = Primary, y = r)) + 
+  geom_point(aes(shape = Primary), stroke = 1, size = 2, 
+             position = position_dodge(0.9)) +
+  stat_summary(aes(group = Primary), position = position_dodge(0.9),
+               fun = mean, fun.max = mean, fun.min = mean,
+               geom = "crossbar", color = "red", width = 0.5) +
+  facet_wrap(~ Species + H2O2, nrow = 1, scales = "free_x") +
+  scale_shape_manual(values = c("Mock" = 1, "-Pi" = 16)) +
+  scale_y_continuous(limits = c(0, 0.2), labels = scales::percent) +
+  xlab("Primary stress (45 min)") + ylab("% survival") +
+  panel_border(color = "black", size = 1.5) +
+  theme(axis.line = element_blank(),
+        axis.title.x = element_blank(), 
+        strip.background = element_blank(),
+        panel.background = element_blank(),
+        axis.text.x = element_text(size = 12, face = "bold", color = "black"),  # Adjust size and face (bold)
+        axis.text.y = element_text(size = 12, face = "bold", color = "black"),
+        axis.title.y = element_text(size = 12, face = "bold")
+        )+ 
+  theme(strip.text = element_text(size = 14, face = "bold")) 
+ggsave("/space/htang5/Downloads/Thesis/Chapter 2-ASR Species/Output/20240517-CaASR-Basal-Plot.png")
+```
+
+
+
+# Statistical Tests
+
+> The basal survival rates between species within the same day are not "paired". We will use a rank-sum test here.
+
+```{r}
+tmp <- dat.f3 %>% 
+  dplyr::filter(Label %in% c("yH714_6", "yH154_4")) %>% 
+  dplyr::filter(Primary == "M") %>% 
+  pivot_wider(id_cols = c(Date), names_from = Species, values_from = r)
+tmp
+with(tmp, t.test(as.numeric(Ca), as.numeric(Sc), paired = FALSE))
+
+with(tmp, wilcox.test(Ca, Sc, paired = FALSE))
+```
+> p = 0.73, basal survival rates are not significantly between species
+
+_Primary stress enhanced survival (ASR) in Ca_
+
+The comparison between r and r' is paired. We will use a signed-rank test.
+```{r}
+tmp <- dat.f3 %>% 
+  dplyr::filter(Label %in% c("yH714_6")) %>% 
+  pivot_wider(id_cols = c(Date), names_from = Primary, values_from = r) %>% 
+  mutate(ASR = P/M)
+tmp
+
+x <- Hmisc::smean.cl.boot(tmp$ASR)
+sprintf("ASR_score mean = %.2f, 95%% CI by bootstrap = [%.2f, %.2f]", x[1], x[2], x[3])
+
+with(tmp, t.test(as.numeric(P), as.numeric(M), paired = TRUE, alternative = "g"))
+
+with(tmp, wilcox.test(P, M, paired = TRUE, alternative = "g"))
+```
+> p = 0.0625, P and M difference is not significant in Ca
+
+_Primary stress no effect in Sc_
+
+```{r}
+tmp <- dat.f3 %>% 
+  dplyr::filter(Label %in% c("yH154_4")) %>% 
+  pivot_wider(id_cols = c(Date), names_from = Primary, values_from = r) %>% 
+  mutate(ASR = P/M)
+tmp
+
+x <- Hmisc::smean.cl.boot(tmp$ASR)
+
+sprintf("ASR_score mean = %.2f, 95%% CI by bootstrap = [%.2f, %.2f]", x[1], x[2], x[3])
+
+with(tmp, t.test(as.numeric(P), as.numeric(M), paired = TRUE, alternative = "g"))
+
+with(tmp, wilcox.test(P, M, paired = TRUE, alternative = "g"))
+```
+> p = 0.087, P and M difference is not significant in Sc
+
+
+
+

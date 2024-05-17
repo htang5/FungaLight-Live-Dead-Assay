@@ -1,0 +1,75 @@
+# Date: experiment date - A/B/letters indicate biological replicates (different colonies) done on the same date									
+# Group: MM = mock primary, mock secondary; MO = mock primary, tBOOH secondary; PM = phosphate starve primary, mock secondary; PO = phosphate starve primary, tBOOH secondary									
+# Len_1: length of primary stress treatment									
+# Len_2: length of secondary stress treatment			tBOOH unit = mM						
+# Dilutions: dilutions for CFU assay									
+# Count: raw counts on CFU plates									
+Date	Species	Strain	Genotype	Group	Len_1	Len_2	tBOOH	Dilutions	Count
+07/17/23A	Cg	yH181	wildtype	MM	45 min	2 hr	0	1000	467
+07/17/23A	Cg	yH181	wildtype	MO	45 min	2 hr	0.6	1000	53
+07/17/23A	Cg	yH181	wildtype	MO	45 min	2 hr	0.65	1000	57
+07/17/23A	Cg	yH181	wildtype	MO	45 min	2 hr	0.7	1000	52
+07/17/23A	Cg	yH181	wildtype	MO	45 min	2 hr	0.75	1000	43
+07/17/23A	Cg	yH181	wildtype	PM	45 min	2 hr	0	1000	317
+07/17/23A	Cg	yH181	wildtype	PO	45 min	2 hr	0.6	1000	54
+07/17/23A	Cg	yH181	wildtype	PO	45 min	2 hr	0.65	1000	52
+07/17/23A	Cg	yH181	wildtype	PO	45 min	2 hr	0.7	1000	61
+07/17/23A	Cg	yH181	wildtype	PO	45 min	2 hr	0.75	1000	65
+07/17/23B	Cg	yH181	wildtype	MM	45 min	2 hr	0	1000	293
+07/17/23B	Cg	yH181	wildtype	MO	45 min	2 hr	0.6	1000	21
+07/17/23B	Cg	yH181	wildtype	MO	45 min	2 hr	0.65	1000	24
+07/17/23B	Cg	yH181	wildtype	MO	45 min	2 hr	0.7	1000	31
+07/17/23B	Cg	yH181	wildtype	MO	45 min	2 hr	0.75	1000	18
+07/17/23B	Cg	yH181	wildtype	PM	45 min	2 hr	0	1000	407
+07/17/23B	Cg	yH181	wildtype	PO	45 min	2 hr	0.6	1000	53
+07/17/23B	Cg	yH181	wildtype	PO	45 min	2 hr	0.65	1000	66
+07/17/23B	Cg	yH181	wildtype	PO	45 min	2 hr	0.7	1000	63
+07/17/23B	Cg	yH181	wildtype	PO	45 min	2 hr	0.75	1000	75
+7/18/23A	Cg	yH181	wildtype	MM	45 min	2 hr	0	1000	255
+7/18/23A	Cg	yH181	wildtype	MO	45 min	2 hr	0.75	1000	28
+7/18/23A	Cg	yH181	wildtype	MO	45 min	2 hr	0.8	1000	22
+7/18/23A	Cg	yH181	wildtype	PM	45 min	2 hr	0	1000	249
+7/18/23A	Cg	yH181	wildtype	PO	45 min	2 hr	0.75	1000	63
+7/18/23A	Cg	yH181	wildtype	PO	45 min	2 hr	0.8	1000	47
+7/18/23B	Cg	yH181	wildtype	MM	45 min	2 hr	0	1000	500
+7/18/23B	Cg	yH181	wildtype	MO	45 min	2 hr	0.75	1000	36
+7/18/23B	Cg	yH181	wildtype	MO	45 min	2 hr	0.8	1000	33
+7/18/23B	Cg	yH181	wildtype	PM	45 min	2 hr	0	1000	216
+7/18/23B	Cg	yH181	wildtype	PO	45 min	2 hr	0.75	1000	47
+7/18/23B	Cg	yH181	wildtype	PO	45 min	2 hr	0.8	1000	56
+7/19/23A	Cg	yH181	wildtype	MM	45 min	2 hr	0	1000	524
+7/19/23A	Cg	yH181	wildtype	MO	45 min	2 hr	0.75	1000	60
+7/19/23A	Cg	yH181	wildtype	PM	45 min	2 hr	0	1000	492
+7/19/23A	Cg	yH181	wildtype	PO	45 min	2 hr	0.75	1000	106
+7/19/23B	Cg	yH181	wildtype	MM	45 min	2 hr	0	1000	422
+7/19/23B	Cg	yH181	wildtype	MO	45 min	2 hr	0.75	1000	35
+7/19/23B	Cg	yH181	wildtype	PM	45 min	2 hr	0	1000	394
+7/19/23B	Cg	yH181	wildtype	PO	45 min	2 hr	0.75	1000	120
+7/21/23A	Cg	yH181	wildtype	MM	45 min	2 hr	0	1000	466
+7/21/23A	Cg	yH181	wildtype	MO	45 min	2 hr	0.75	1000	7
+7/21/23A	Cg	yH181	wildtype	MO	45 min	2 hr	0.8	100	100
+7/21/23A	Cg	yH181	wildtype	MO	45 min	2 hr	0.85	10	5
+7/21/23A	Cg	yH181	wildtype	MO	45 min	2 hr	0.9	10	9
+7/21/23A	Cg	yH181	wildtype	PM	45 min	2 hr	0	1000	699
+7/21/23A	Cg	yH181	wildtype	PO	45 min	2 hr	0.75	1000	73
+7/21/23A	Cg	yH181	wildtype	PO	45 min	2 hr	0.8	100	953
+7/21/23A	Cg	yH181	wildtype	PO	45 min	2 hr	0.85	10	2814
+7/21/23A	Cg	yH181	wildtype	PO	45 min	2 hr	0.9	10	2023
+7/21/23B	Cg	yH181	wildtype	MM	45 min	2 hr	0	1000	437
+7/21/23B	Cg	yH181	wildtype	MO	45 min	2 hr	0.75	1000	16
+7/21/23B	Cg	yH181	wildtype	MO	45 min	2 hr	0.8	100	152
+7/21/23B	Cg	yH181	wildtype	MO	45 min	2 hr	0.85	10	10
+7/21/23B	Cg	yH181	wildtype	MO	45 min	2 hr	0.9	10	3
+7/21/23B	Cg	yH181	wildtype	PM	45 min	2 hr	0	1000	249
+7/21/23B	Cg	yH181	wildtype	PO	45 min	2 hr	0.75	1000	65
+7/21/23B	Cg	yH181	wildtype	PO	45 min	2 hr	0.8	100	606
+7/21/23B	Cg	yH181	wildtype	PO	45 min	2 hr	0.85	10	2320
+7/21/23B	Cg	yH181	wildtype	PO	45 min	2 hr	0.9	10	1366
+7/26/23A	Cg	yH181	wildtype	MM	45 min	2 hr	0	1000	490
+7/26/23A	Cg	yH181	wildtype	MO	45 min	2 hr	0.8	100	25
+7/26/23A	Cg	yH181	wildtype	PM	45 min	2 hr	0	1000	209
+7/26/23A	Cg	yH181	wildtype	PO	45 min	2 hr	0.8	1000	74
+7/26/23B	Cg	yH181	wildtype	MM	45 min	2 hr	0	1000	395
+7/26/23B	Cg	yH181	wildtype	MO	45 min	2 hr	0.8	100	18
+7/26/23B	Cg	yH181	wildtype	PM	45 min	2 hr	0	1000	245
+7/26/23B	Cg	yH181	wildtype	PO	45 min	2 hr	0.8	1000	61

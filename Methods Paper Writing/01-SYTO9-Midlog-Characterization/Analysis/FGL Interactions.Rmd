@@ -1,0 +1,304 @@
+---
+title: "Fig 3 Graphs"
+output: html_document
+date: "2023-06-15"
+---
+
+# Background
+This is the flow cytometry and CFU data for Cg, Sc, Kl. Cg, Sc, Kl treated with 0-1M H2O2 are stained with Fungalight 1, run through flow and plated for CFU (details in ELN). Goal is to correlate Flow vs CFU and generate graphs for figure 3.
+
+```{r setup, message=FALSE}
+require(tidyverse)
+require(flowCore)
+require(flowClust)
+require(openCyto)
+require(ggcyto)
+require(cowplot)
+require(ggrdiges)
+```
+
+# Import data
+```{r}
+data.path = "/space/htang5/Documents/20240508-11_Dye_ratio"
+fs <- read.flowSet(path = data.path, transformation = FALSE,  # the original values are already linearized. 
+                   emptyValue = FALSE,  alter.names = TRUE,   # change parameter names to R format
+                   column.pattern = ".H|FSC|SSC") # only load the height variables for the fluorescent parameters
+```
+
+Simplify the sample names
+
+```{r}
+require(PTXQC)
+oriNames <- sampleNames(fs)
+tmp <- str_split(oriNames, pattern = "[ _]+", simplify = TRUE)[,c(1, 5, 6)]
+colnames(tmp) <- c("Date", "Treatment", "Ratio") 
+sample <- data.frame(tmp) %>% 
+  mutate(Ratio = gsub(".fcs", "", Ratio),
+         Ratio = ifelse(Ratio == "1t2", "1:2",
+                        ifelse(Ratio == "1t1", "1:1",
+                               ifelse(Ratio == "2t1", "2:1", Ratio))),
+         Ratio = factor(Ratio, levels = (c("2:1", "1:1", "1:2"))), 
+         Treatment = factor(Treatment, levels = as.character(c(0, 10, 100, 1000))) %>% 
+           paste(" mM", sep = ""))
+rownames(sample) <- oriNames
+pData(fs) <- sample
+print(pData(fs))
+write_tsv(pData(fs), file = "../Input/20240512-Interactions-raw-data-ht.tsv")
+```
+
+# Gatting for Singlets
+>The following gaphing steps are used to gate singlets by FSC and SSC values. Only singlets are included in analysis.
+
+>Gate for outlier 
+
+```{r}
+outlier.gate <- rectangleGate(filterId = "-outlier", "FSC.H" = c(1.2e5, 1e6), "SSC.H" = c(1e2, 1e6))
+ggcyto(fs [1], aes(x = FSC.H, y = SSC.H), subset = "root") +
+  geom_hex(bins = 64) + geom_gate(outlier.gate) + facet_wrap(~name, ncol = 2) + ggcyto_par_set(limits = "instrument")
+```
+
+Add gate to GS
+```{r}
+gs <- GatingSet(fs) # create a GatingSet
+gs_pop_add(gs, outlier.gate, parent = "root")
+recompute(gs)
+```
+Gate for singlets
+
+```{r fig.width=4, fig.height=4}
+scPars <- ggcyto_par_set(limits = list(x = c(0,1e6), y = c(30,300)))
+ex <- Subset(fs[[1]], outlier.gate)
+polygon <- matrix(c(1e5, 1e5, 1e6, 1e6, 
+                    60, 105, 135,60), ncol = 2)
+colnames(polygon) <- c("FSC.H", "FSC.W")
+singlet.gate <- polygonGate(filterId = "singlet", boundaries = polygon)
+ggcyto(ex, aes(x = FSC.H, y = FSC.W)) + geom_hex(bins = 128) + geom_gate(singlet.gate) + geom_stats() + scPars
+```
+
+Add this gate to the gatingSet
+
+```{r eval=FALSE, include=FALSE}
+gs_pop_add(gs, singlet.gate, parent = "-outlier", name = "singlet")
+recompute(gs)
+```
+
+
+# Gate for Live population
+```{r fig.width=4, fig.height=4}
+scPars <- ggcyto_par_set(limits = list(x = c(0,1e6), y = c(0,1e6)))
+ex <- Subset(fs[[9]], singlet.gate)
+polygon <- matrix(c(0, 10^5, 10^5, 0,
+                    10^2.2, 10^2.2, 0, 0), ncol = 2)
+colnames(polygon) <- c("BL1.H", "BL3.H")
+live.gate <- polygonGate(filterId = "live", boundaries = polygon)
+ggcyto(ex, aes(x = BL1.H, y = BL3.H)) + geom_hex(bins = 128) + geom_gate(live.gate) + geom_stats() + scPars + scale_x_logicle() + scale_y_logicle() 
+```
+
+
+Add this gate to the gatingSet
+
+```{r eval=FALSE, include=FALSE}
+gs_pop_add(gs, live.gate, parent = "singlet", name = "live")
+recompute(gs)
+```
+
+
+# Extract event counts, write into tibble, export into csv
+
+```{r}
+gated_stats_fs <- gs_pop_get_stats(gs) %>% 
+  as_tibble() %>% 
+  mutate(pop = gsub(".*/", "", pop), pop = gsub("-outlier", "cells", pop)) %>% 
+  pivot_wider(names_from = pop, names_prefix = "n_", values_from = count)
+print(gated_stats_fs)
+gated_stats_fs$percent_Live <- gated_stats_fs$n_live / gated_stats_fs$n_singlet
+gated_data <- cbind(pData(fs), gated_stats_fs) %>% 
+    as.tibble() %>% relocate(name, .after = last_col())
+write_tsv(gated_data, file = "../Input/20240512-Intercatiopn-Distinguishing-Power-gated-ht.tsv")
+print(gated_data)
+```
+
+# Output graph production
+
+>Several output graphs are produced, and are stored in the Output folder.
+
+```{r fig.width=12, fig.height=9}
+sub <- fs[(pData(fs)$Date == "051024")]
+sg <- Subset(sub, singlet.gate)
+p2 <- sg  %>%
+  ggcyto(aes(x = "BL1.H", y = "BL3.H")) + 
+  geom_hex(bins = 80, aes(fill = ..ncount..)) +
+  facet_grid(Ratio ~ Treatment) + 
+  theme_minimal()
+p2 + scale_x_logicle(breaks = c(100, 1000, 10000, 100000)) + scale_y_logicle(breaks = c(100, 1000, 10000)) +
+  xlab("FungaLight Green Fluorescence") + ylab("FungaLight Red Fluorescence")  +
+  panel_border(color = "black", size = 1.5) +
+  theme(axis.line = element_blank(),
+        strip.background = element_blank(),
+        axis.text.x = element_text(size = 25, face = "bold", color = "black"),  # Adjust size and face (bold)
+        axis.text.y = element_text(size = 25, face = "bold", color = "black"),
+        axis.title.x = element_text(size = 25, face = "bold"),
+        axis.title.y = element_text(size = 25, face = "bold")
+        )+ 
+  theme(strip.text = element_text(size = 25, face = "bold")) 
+ggsave("../output/20240512-FGL-Intercation-Plot.png")
+```
+
+```{r}
+p1 <- gated_data %>% 
+    dplyr::filter(Ratio == "2:1") %>% 
+   dplyr::filter(!(Treatment %in% c("0 mM")))  %>%
+   mutate(Treatment = gsub(" mM", "", Treatment)) %>%
+  ggplot(aes(x = Treatment, y = percent_Live))  + 
+  geom_bar(stat = "summary", fun = "mean", fill = "skyblue2", alpha = 0.7) +
+  geom_point(size = 3, position = position_jitter(0.1)) + 
+   scale_y_continuous(labels = scales::percent_format()) +
+  labs(x = bquote(H[2]*O[2]~(mM)), y = "% Live") +
+  ggtitle("2:1") +  
+  theme(plot.title = element_text(hjust = 30)) +
+  theme_cowplot(font_size = 16) 
+  
+
+p2 <- gated_data %>% 
+    dplyr::filter(Ratio == "1:1") %>% 
+   dplyr::filter(!(Treatment %in% c("0 mM")))  %>%
+   mutate(Treatment = gsub(" mM", "", Treatment)) %>%
+  ggplot(aes(x = Treatment, y = percent_Live))  + 
+  geom_bar(stat = "summary", fun = "mean", fill = "skyblue2", alpha = 0.7) +
+  geom_point(size = 3, position = position_jitter(0.1)) + 
+   scale_y_continuous(labels = scales::percent_format()) +
+  labs(x = bquote(H[2]*O[2]~(mM)), y = "% Live") +
+  ggtitle("1:1") +  
+  theme(plot.title = element_text(hjust = 30)) +
+  theme_cowplot(font_size = 16) 
+
+p3 <- gated_data %>% 
+    dplyr::filter(Ratio == "1:2") %>% 
+   dplyr::filter(!(Treatment %in% c("0 mM")))  %>%
+   mutate(Treatment = gsub(" mM", "", Treatment)) %>%
+  ggplot(aes(x = Treatment, y = percent_Live))  + 
+  geom_bar(stat = "summary", fun = "mean", fill = "skyblue2", alpha = 0.7) +
+  geom_point(size = 3, position = position_jitter(0.1)) + 
+   scale_y_continuous(labels = scales::percent_format()) +
+  labs(x = bquote(H[2]*O[2]~(mM)), y = "% Live") +
+  ggtitle("1:2") +  
+  theme(plot.title = element_text(hjust = 30)) +
+  theme_cowplot(font_size = 16) 
+
+combined_plot <- plot_grid(p1, p2, p3, nrow = 1, ncol = 3, common.legend = TRUE, align = 'hv', widths = c(6, 6, 6))
+
+print(combined_plot)
+#ggsave("../output/20240501-Intercations-Gated.png")
+```
+
+```{r}
+library(dplyr)
+stats %>% 
+ mutate(concentration = factor(concentration, levels = c("250", "500","1000", "2000"))) %>% 
+   dplyr::filter(Dye == "PI") %>% 
+ggplot(aes(x = treatment, y = percent_RP)) + 
+  geom_point(aes(shape = concentration), stroke = 1, size = 2, 
+             position = position_dodge(0.9)) +
+  scale_shape_manual(name = "", values = c(1, 16, 10, 15)) +
+  stat_summary(aes(group = concentration), position = position_dodge(0.9),
+               fun = mean, fun.max = mean, fun.min = mean,
+               geom = "crossbar", color = "red", width = 0.5) +
+  facet_wrap(~ concentration + Dye, nrow = 1, scales = "free_x") +
+  #scale_shape_manual(values = c("Mock" = 1, "-Pi" = 16)) +
+  scale_y_continuous(limits = c(0, 0.15), labels = scales::percent) +
+  xlab("mM H2O2 Treatment") + ylab("% Red Positive Gated") +
+  panel_border(color = "black", size = 1.5) +
+  theme(axis.line = element_blank(),
+        #axis.title.x = element_blank(), 
+        strip.background = element_blank(),
+        axis.text.x = element_text(size = 10, face = "bold"),  # Adjust size and face (bold)
+        axis.text.y = element_text(size = 16, face = "bold"),
+        axis.title.x = element_text(size = 16, face = "bold"),
+        axis.title.y = element_text(size = 16, face = "bold")
+        )
+```
+
+Extract MFI for BL1.H across all flowFrames
+```{r}
+library(flowCore)
+tmp <- fsApply(fs, each_col, median)
+combined_data <- cbind(pData(fs), tmp)
+pData(fs) <- combined_data
+print(pData(fs))
+```
+```{r}
+```{r}
+library(flowCore)
+tmp <- fsApply(fs, each_col, median)
+combined_data <- cbind(pData(fs), tmp)
+pData(fs) <- combined_data
+print(pData(fs))
+```
+```
+
+```{r}
+colnames(pData(fs))
+```
+
+# Graph MFIs against %Survival
+```{r}
+pData(fs) %>%
+ mutate(Dilution = factor(Dilution, levels = c("250", "500","1000", "2000"))) %>% 
+   dplyr::filter(Dye == "SYTO9") %>% 
+  ggplot(aes(x = Treatment, y = BL1.H)) +
+  geom_line() +
+  geom_point() +
+  facet_wrap(~ Dilution, scales = "free") +
+  labs(x = "Percent Dead", y = "Median BL1.H") +
+  theme_minimal()
+```
+```{r}
+```{r}
+pData(fs) %>%
+ mutate(Dilution = factor(Dilution, levels = c("250", "500","1000", "2000"))) %>% 
+   dplyr::filter(Dye == "SYTO9") %>% 
+  ggplot(aes(x = Treatment, y = BL1.H)) +
+  geom_point() +
+  stat_summary(aes(group = Treatment), position = position_dodge(0.9),
+               fun = mean, fun.max = mean, fun.min = mean,
+               geom = "crossbar", color = "red", width = 0.5) +
+  facet_wrap(~ Dilution, scales = "free") +
+  labs(x = "Percent Dead", y = "Median BL1.H") +
+  theme_minimal()
+```
+```
+
+
+# Graph MFIs against %Survival
+```{r}
+pData(fs) %>%
+  mutate(buffer = gsub("\\.fcs", "", buffer)) %>%
+  ggplot(aes(x = buffer, y = BL1.H)) +
+  geom_point() +
+  stat_summary(aes(group = buffer), position = position_dodge(0.9),
+               fun = mean, fun.max = mean, fun.min = mean,
+               geom = "crossbar", color = "red", width = 0.5) +
+  labs(x = "Protocol", y = "Median Green Fluorescence") +
+  panel_border(color = "black", size = 1.5) +
+  theme(axis.line = element_blank(),
+        #axis.title.x = element_blank(), 
+        strip.background = element_blank(),
+        axis.text.x = element_text(size = 16, face = "bold"),  # Adjust size and face (bold)
+        axis.text.y = element_text(size = 16, face = "bold"),
+        axis.title.x = element_text(size = 16, face = "bold"),
+        axis.title.y = element_text(size = 16, face = "bold")
+        )
+```
+
+
+
+
+
+
+
+
+
+
+
+
+

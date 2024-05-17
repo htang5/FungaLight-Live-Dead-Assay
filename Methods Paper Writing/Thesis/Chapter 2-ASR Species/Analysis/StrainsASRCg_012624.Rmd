@@ -1,0 +1,241 @@
+---
+title: "Cg Strains ASR"
+output: html_document
+date: "2023-08-05"
+---
+# Import data
+```{r}
+library(tidyverse)
+raw <- read.table("/space/htang5/Downloads/Thesis/Chapter 2-ASR Species/Input/CgStrains.tsv", sep="\t", header=TRUE)
+ summary(raw)
+```
+
+```{r}
+library(dplyr)
+tmp <-  raw %>%
+  mutate(
+    scaled = Count * Dilutions * 1e-2
+  ) %>% 
+  # remove uninformative columns. only one H2O2 conc used for each species
+  select(-Len_1, -Len_2)
+dat.f3 <- tmp %>% 
+  # group by primary to calculate r (MO/MM) or r' (PO/PM)
+  separate(Group, into = c("Primary", "Secondary"), sep = 1) %>% 
+  group_by(Date, Strain, Primary) %>% 
+  mutate(scaled_M = scaled[Secondary == "M"],
+         r = num(scaled / scaled[Secondary == "M"], digits = 3)) %>% 
+   dplyr::filter(Secondary != "M") %>%
+  #pivot_wider(id_cols = c(Date, Strain, Species, H2O2), 
+              #names_from = Primary, values_from = r, names_prefix = "r") %>% 
+  #mutate(ASR_score = rP / rM) %>%
+mutate(Label = paste(Strain, H2O2, sep = "_"))
+print(dat.f3)
+#write_tsv(dat.f3, file = "../Output/CgStrainASR-Ch2-Calculated.tsv")
+```
+### Plot (all data)
+
+
+```{r}
+library(ggplot2)
+require(tidyverse)
+require(cowplot)
+require(broom)
+dat.f3 %>% 
+  mutate( Primary = factor(Primary, levels = c("M", "P"), 
+                     labels = c("Mock", "-Pi")),
+         Strain = factor(Strain, levels = c("yH97", "yH103", "yH250", "yH181"),
+                      labels = c("yH97", "yH103", "yH250", "yH181")),
+         H2O2 = paste0(H2O2, " mM")
+  ) %>%
+dplyr::filter(Label %in% c("yH97_100","yH103_25","yH250_40","yH181_60")) %>% 
+  ggplot(aes(x = Primary, y = r)) + 
+  geom_point(aes(shape = Primary), stroke = 1, size = 2, 
+             position = position_dodge(0.9)) +
+  stat_summary(aes(group = Primary), position = position_dodge(0.9),
+               fun = mean, fun.max = mean, fun.min = mean,
+               geom = "crossbar", color = "red", width = 0.5) +
+  facet_wrap(~ Strain + H2O2, nrow = 1, scales = "free_x") +
+  scale_shape_manual(values = c("Mock" = 1, "-Pi" = 16)) +
+  scale_y_continuous(limits = c(0, 0.4), labels = scales::percent) +
+  xlab("Primary stress (45 min)") + ylab("% survival") +
+  panel_border(color = "black", size = 1.5) +
+  theme(axis.line = element_blank(),
+        axis.title.x = element_blank(), 
+        strip.background = element_blank(),
+        panel.background = element_blank(),# Remove strip background
+        axis.text.x = element_text(size = 20, face = "bold", color = "black"),  # Adjust size and face (bold)
+        axis.text.y = element_text(size = 20, face = "bold", color = "black"),
+        axis.title.y = element_text(size = 20, face = "bold")
+  )+ 
+  theme(strip.text = element_text(size = 20, face = "bold"))
+ggsave("/space/htang5/Downloads/Thesis/Chapter 2-ASR Species/Output/20240326-CgStrainASR-Plot.png")
+```
+
+```{r}
+library(ggplot2)
+require(tidyverse)
+require(cowplot)
+require(broom)
+dat.f3 %>% 
+  mutate( Primary = factor(Primary, levels = c("M", "P"), 
+                     labels = c("Mock", "-Pi")),
+         Strain = factor(Strain, levels = c("yH97", "yH103", "yH250", "yH181"),
+                      labels = c("yH97", "yH103", "yH250", "yH181")),
+         H2O2 = paste0(H2O2, " mM")
+  ) %>%
+dplyr::filter(Label %in% c("yH97_100","yH97_120","yH97_140","yH181_60")) %>% 
+  ggplot(aes(x = Primary, y = r)) + 
+  geom_point(aes(shape = Primary), stroke = 1, size = 2, 
+             position = position_dodge(0.9)) +
+  stat_summary(aes(group = Primary), position = position_dodge(0.9),
+               fun = mean, fun.max = mean, fun.min = mean,
+               geom = "crossbar", color = "red", width = 0.5) +
+  facet_wrap(~ Strain + H2O2, nrow = 1, scales = "free_x") +
+  scale_shape_manual(values = c("Mock" = 1, "-Pi" = 16)) +
+  scale_y_continuous(limits = c(0, 0.4), labels = scales::percent) +
+  xlab("Primary stress (45 min)") + ylab("% survival") +
+  panel_border(color = "black", size = 1.5) +
+  theme(axis.line = element_blank(),
+        axis.title.x = element_blank(), 
+        strip.background = element_blank(),
+        panel.background = element_blank(),# Remove strip background
+        axis.text.x = element_text(size = 20, face = "bold", color = "black"),  # Adjust size and face (bold)
+        axis.text.y = element_text(size = 20, face = "bold", color = "black"),
+        axis.title.y = element_text(size = 20, face = "bold")
+  )+ 
+  theme(strip.text = element_text(size = 20, face = "bold"))
+ggsave("/space/htang5/Downloads/Thesis/Chapter 2-ASR Species/Output/20240516-yH97-basal-Plot.png")
+```
+
+```{r}
+library(ggplot2)
+require(tidyverse)
+require(cowplot)
+require(broom)
+dat.f3 %>% 
+  mutate( Primary = factor(Primary, levels = c("M", "P"), 
+                     labels = c("Mock", "-Pi")),
+         Strain = factor(Strain, levels = c("yH97", "yH103", "yH250", "yH181"),
+                      labels = c("yH97", "yH103", "yH250", "yH181")),
+         H2O2 = paste0(H2O2, " mM")
+  ) %>%
+dplyr::filter(Label %in% c("yH103_15","yH103_20","yH103_25","yH181_60")) %>% 
+  ggplot(aes(x = Primary, y = r)) + 
+  geom_point(aes(shape = Primary), stroke = 1, size = 2, 
+             position = position_dodge(0.9)) +
+  stat_summary(aes(group = Primary), position = position_dodge(0.9),
+               fun = mean, fun.max = mean, fun.min = mean,
+               geom = "crossbar", color = "red", width = 0.5) +
+  facet_wrap(~ Strain + H2O2, nrow = 1, scales = "free_x") +
+  scale_shape_manual(values = c("Mock" = 1, "-Pi" = 16)) +
+  scale_y_continuous(limits = c(0, 0.4), labels = scales::percent) +
+  xlab("Primary stress (45 min)") + ylab("% survival") +
+  panel_border(color = "black", size = 1.5) +
+  theme(axis.line = element_blank(),
+        axis.title.x = element_blank(), 
+        strip.background = element_blank(),
+        panel.background = element_blank(),# Remove strip background
+        axis.text.x = element_text(size = 20, face = "bold", color = "black"),  # Adjust size and face (bold)
+        axis.text.y = element_text(size = 20, face = "bold", color = "black"),
+        axis.title.y = element_text(size = 20, face = "bold")
+  )+ 
+  theme(strip.text = element_text(size = 20, face = "bold"))
+ggsave("/space/htang5/Downloads/Thesis/Chapter 2-ASR Species/Output/20240516-yH103-basal-Plot.png")
+```
+
+```{r}
+library(ggplot2)
+require(tidyverse)
+require(cowplot)
+require(broom)
+dat.f3 %>% 
+  mutate( Primary = factor(Primary, levels = c("M", "P"), 
+                     labels = c("Mock", "-Pi")),
+         Strain = factor(Strain, levels = c("yH97", "yH103", "yH250", "yH181"),
+                      labels = c("yH97", "yH103", "yH250", "yH181")),
+         H2O2 = paste0(H2O2, " mM")
+  ) %>%
+dplyr::filter(Label %in% c("yH250_20","yH250_40","yH250_60","yH181_60")) %>% 
+  ggplot(aes(x = Primary, y = r)) + 
+  geom_point(aes(shape = Primary), stroke = 1, size = 2, 
+             position = position_dodge(0.9)) +
+  stat_summary(aes(group = Primary), position = position_dodge(0.9),
+               fun = mean, fun.max = mean, fun.min = mean,
+               geom = "crossbar", color = "red", width = 0.5) +
+  facet_wrap(~ Strain + H2O2, nrow = 1, scales = "free_x") +
+  scale_shape_manual(values = c("Mock" = 1, "-Pi" = 16)) +
+  scale_y_continuous(limits = c(0, 0.4), labels = scales::percent) +
+  xlab("Primary stress (45 min)") + ylab("% survival") +
+  panel_border(color = "black", size = 1.5) +
+  theme(axis.line = element_blank(),
+        axis.title.x = element_blank(), 
+        strip.background = element_blank(),
+        panel.background = element_blank(),# Remove strip background
+        axis.text.x = element_text(size = 20, face = "bold", color = "black"),  # Adjust size and face (bold)
+        axis.text.y = element_text(size = 20, face = "bold", color = "black"),
+        axis.title.y = element_text(size = 20, face = "bold")
+  )+ 
+  theme(strip.text = element_text(size = 20, face = "bold"))
+ggsave("/space/htang5/Downloads/Thesis/Chapter 2-ASR Species/Output/20240516-yH250-basal-Plot.png")
+```
+
+# Statistical Tests#
+
+##Calculating ASR Score##
+
+```{r}
+tmp1 <- dat.f3 %>% 
+ dplyr::filter(Secondary != "M") %>%
+  pivot_wider(id_cols = c(Date, Strain, Species, H2O2), 
+              names_from = Primary, values_from = r, names_prefix = "r") %>% 
+  mutate(ASR_score = rP / rM) %>%
+ mutate(Label = paste(Strain, H2O2, sep = "_"))
+print(tmp1)
+#write_tsv(tmp1, file = "/space/htang5/Downloads/Strains-ASRScore.tsv")
+```
+
+
+```{r}
+tmp1 %>% 
+  dplyr::filter(Label %in% c("yH97_100")) 
+  
+x <- Hmisc::smean.cl.boot(tmp1$ASR_score)
+sprintf("ASR_score mean = %.2f, 95%% CI by bootstrap = [%.2f, %.2f]", x[1], x[2], x[3])
+
+with(tmp1, t.test(as.numeric(rP), as.numeric(rM), paired = TRUE, alternative = "g"))
+
+with(tmp1, wilcox.test(rP, rM, paired = TRUE, alternative = "g"))
+```
+
+
+```{r}
+tmp2 <- tmp1 %>% 
+  dplyr::filter(Label %in% c("yH181_60"))
+x <- Hmisc::smean.cl.boot(tmp2$ASR_score)
+sprintf("ASR_score mean = %.2f, 95%% CI by bootstrap = [%.2f, %.2f]", x[1], x[2], x[3])
+
+with(tmp2, t.test(as.numeric(rP), as.numeric(rM), paired = TRUE, alternative = "g"))
+
+with(tmp2, wilcox.test(rP, rM, paired = TRUE, alternative = "g"))
+```
+
+```{r}
+tmp3 <- tmp1 %>% 
+  dplyr::filter(Label %in% c("yH250_40"))
+x <- Hmisc::smean.cl.boot(tmp3$ASR_score)
+sprintf("ASR_score mean = %.2f, 95%% CI by bootstrap = [%.2f, %.2f]", x[1], x[2], x[3])
+
+with(tmp3, t.test(as.numeric(rP), as.numeric(rM), paired = TRUE, alternative = "g"))
+
+with(tmp3, wilcox.test(rP, rM, paired = TRUE, alternative = "g"))
+```
+```{r}
+tmp4 <- tmp1 %>% 
+  dplyr::filter(Label %in% c("yH181_60"))
+x <- Hmisc::smean.cl.boot(tmp4$ASR_score)
+sprintf("ASR_score mean = %.2f, 95%% CI by bootstrap = [%.2f, %.2f]", x[1], x[2], x[3])
+
+with(tmp4, t.test(as.numeric(rP), as.numeric(rM), paired = TRUE, alternative = "g"))
+
+with(tmp4, wilcox.test(rP, rM, paired = TRUE, alternative = "g"))
+```

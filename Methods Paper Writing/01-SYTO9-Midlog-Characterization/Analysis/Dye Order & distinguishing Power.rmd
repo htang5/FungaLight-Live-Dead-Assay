@@ -126,17 +126,18 @@ recompute(gs)
 
 ```{r fig.width=4, fig.height=4}
 scPars <- ggcyto_par_set(limits = list(x = c(0,1e6), y = c(0,1e6)))
-ex <- Subset(dat.f1g[[14]], singlet.gate)
-polygon1 <- matrix(c(0, 10^4.5, 10^4.5, 0,
-                    0, 0, 10^3, 10^3), ncol = 2)
-colnames(polygon1) <- c("BL1.H", "BL3.H")
-live.gate <- polygonGate(filterId = "live", boundaries = polygon1)
-ggcyto(ex, aes(x = BL1.H, y = BL3.H)) + geom_hex(bins = 128) + geom_gate(live.gate) + geom_stats() + scPars + scale_x_logicle() + scale_y_logicle() 
+ex <- Subset(dat.f1g[[8]], singlet.gate)
+polygon <- matrix(c(0, 10^5, 10^5, 0,
+                    10^2.2, 10^2.2, 0, 0), ncol = 2)
+colnames(polygon) <- c("BL1.H", "BL3.H")
+Live.gate <- polygonGate(filterId = "Live", boundaries = polygon)
+ggcyto(ex, aes(x = BL1.H, y = BL3.H)) + geom_hex(bins = 128) + geom_gate(Live.gate) + geom_stats() + scPars + scale_x_logicle() + scale_y_logicle() 
 ```
+
 Add this gate to the gatingSet
 
 ```{r eval=FALSE, include=FALSE}
-gs_pop_add(gs, live.gate, parent = "singlet", name = "live")
+gs_pop_add(gs, Live.gate, parent = "singlet", name = "Live")
 recompute(gs)
 ```
 
@@ -162,26 +163,25 @@ recompute(gs)
 >Exported gated event counts
 
 ```{r}
-gated_stats_f1g <- gs_pop_get_stats(gs) %>% 
+gated_stats_fs <- gs_pop_get_stats(gs) %>% 
   as_tibble() %>% 
   mutate(pop = gsub(".*/", "", pop), pop = gsub("-outlier", "cells", pop)) %>% 
   pivot_wider(names_from = pop, names_prefix = "n_", values_from = count)
-gated_stats_f1g$percent_PIDead <- gated_stats_f1g$n_PIDead / gated_stats_f1g$n_singlet
-gated_stats_f1g$percent_CODead <- gated_stats_f1g$n_CODead / gated_stats_f1g$n_singlet
-gated_stats_f1g$percent_live <- gated_stats_f1g$n_live / gated_stats_f1g$n_singlet
-gated_stats_f1g$percent_inter <- gated_stats_f1g$n_Intermediate / gated_stats_f1g$n_singlet
-gated_stats_f1g$FGS <- gated_stats_f1g$percent_live + 0.5*gated_stats_f1g$percent_inter - 1*gated_stats_f1g$percent_CODead
-gated_data <- cbind(pData(dat.f1g), gated_stats_f1g) %>% 
+print(gated_stats_fs)
+gated_stats_fs$percent_Live <- gated_stats_fs$n_Live / gated_stats_fs$n_singlet
+gated_data <- cbind(pData(dat.f1g), gated_stats_fs) %>% 
     as.tibble() %>% relocate(name, .after = last_col())
-write_tsv(gated_data, file = "../Input/202401017-fig-1g-Dye-Order-gated-ht.tsv")
+#write_tsv(gated_data, file = "../Input/20240501-Intercatiopn-Distinguishing-Power-gated-ht.tsv")
 print(gated_data)
 ```
 
 # Output Graph Production
 >Several output graphs are produced, and are stored in the Output folder.
 
-```{r}
-sub <- dat.f1g[pData(dat.f1g)$Date == "011624"] #pData(dat.f1g)$Dye == "PI" & 
+```{r fig.width=12, fig.height=6}
+sub <- dat.f1g[pData(dat.f1g)$Date == "011624" & 
+                (pData(dat.f1g)$Dye == "PI_first" |
+                 pData(dat.f1g)$Dye == "SYTO9_first")]
 sg <- Subset(sub, singlet.gate)
 p2 <- sg %>% 
   ggcyto(aes(x = "BL1.H", y = "BL3.H")) + 
@@ -190,70 +190,64 @@ p2 <- sg %>%
              labeller = as_labeller(c("0 mM" = "0 mM", "10 mM" = "10 mM", "100 mM" = "100 mM", "1000 mM" = "1000 mM",
                                        "PI" = "PI only", "SYTO9_first" = "SYTO9+PI Costain", "PI_first" = "PI first"))) + 
   theme_minimal()
-p2 + scale_x_logicle() + scale_y_logicle() +
-  xlab("FungaLight Green Fluorescence") + ylab("FungaLight Red Fluorescence") +
-  panel_border(color = "black", size = 1) +
-  theme(axis.line = element_blank(),
-        strip.background = element_blank(),
-        axis.text.x = element_text(size = 10, color = "black"),  # Adjust size and face (bold)
-        axis.text.y = element_text(size = 10, color = "black"),
-        axis.title.x = element_text(size = 16, face = "bold"),
-        axis.title.y = element_text(size = 16, face = "bold")
-        ) + 
-  theme(strip.text = element_text(size = 9, face = "bold")) 
-ggsave("../output/20240117-dye-Order-Flow-Plot.png", width = 7, height = 5)
-```
-> Plot % Dead and Compare
-
-```{r}
-pf1g <- gated_data %>%
-  dplyr::filter(Dye == "PI_first") %>% 
-  #dplyr::filter(!(Treatment %in% c("1000 mM")))  %>%
-  #mutate(Dilution = factor(Dilution, levels = c("250 x", "500 x", "1000 x", "2000 x"))) %>%
-  ggplot(aes(x = Treatment, y = percent_PIDead)) +
-  #facet_wrap(~ Treatment, scale = "free_y") +
-  geom_boxplot() +
-  geom_point(stroke = 1, size = 2, position = position_jitter(0.2)) +
-  scale_y_continuous(labels = scales::percent) +
-  theme_minimal()
-pf1g +
-  labs(x = "Hydrogen Peroxide Treatment Concentration", y = "Gated Percent Dead Cells") +
+p2 + scale_x_logicle(breaks = c(100, 1000, 10000, 100000)) + scale_y_logicle(breaks = c(100, 1000, 10000)) +
+  xlab("FungaLight Green Fluorescence") + ylab("FungaLight Red Fluorescence")  +
   panel_border(color = "black", size = 1.5) +
   theme(axis.line = element_blank(),
         strip.background = element_blank(),
-        axis.text.x = element_text(size = 12, face = "bold", color = "black"),  # Adjust size and face (bold)
-        axis.text.y = element_text(size = 16, face = "bold", color = "black"),
-        axis.title.x = element_text(size = 16, face = "bold"),
-        axis.title.y = element_text(size = 16, face = "bold")
+        axis.text.x = element_text(size = 25, face = "bold", color = "black"),  # Adjust size and face (bold)
+        axis.text.y = element_text(size = 25, face = "bold", color = "black"),
+        axis.title.x = element_text(size = 25, face = "bold"),
+        axis.title.y = element_text(size = 25, face = "bold")
         )+ 
-  theme(strip.text = element_text(size = 16, face = "bold")) 
-#ggsave("../output/20240104-PI-Dilutions-Gated_RP-Plot.png", width = 7, height = 5)
+  theme(strip.text = element_text(size = 25, face = "bold")) 
+ggsave("../output/20240501-dye-Order-Flow-Plot.png")
 ```
-
-
 ```{r}
-pf1g <- gated_data %>%
-  dplyr::filter(!(Dye %in% c("PI"))) %>% 
-  #dplyr::filter(!(Treatment %in% c("1000 mM")))  %>%
-  #mutate(Dilution = factor(Dilution, levels = c("250 x", "500 x", "1000 x", "2000 x"))) %>%
-  ggplot(aes(x = Treatment, y = FGS)) +
-  facet_wrap(~ Dye, scale = "free_y") +
-  geom_boxplot() +
-  geom_point(stroke = 1, size = 2, position = position_jitter(0.2)) +
-  scale_y_continuous() +
-  theme_minimal()
-pf1g +
-  labs(x = "Hydrogen Peroxide Treatment Concentration", y = "FGS") +
-  panel_border(color = "black", size = 1.5) +
-  theme(axis.line = element_blank(),
-        strip.background = element_blank(),
-        axis.text.x = element_text(size = 12, face = "bold", color = "black"),  # Adjust size and face (bold)
-        axis.text.y = element_text(size = 16, face = "bold", color = "black"),
-        axis.title.x = element_text(size = 16, face = "bold"),
-        axis.title.y = element_text(size = 16, face = "bold")
-        )+ 
-  theme(strip.text = element_text(size = 16, face = "bold")) 
-#ggsave("../output/20240104-PI-Dilutions-Gated_RP-Plot.png", width = 7, height = 5)
+p1 <- gated_data %>% 
+    dplyr::filter(Dye == "PI_first") %>% 
+   dplyr::filter(!(Treatment %in% c("0 mM")))  %>%
+   mutate(Treatment = gsub(" mM", "", Treatment)) %>%
+  ggplot(aes(x = Treatment, y = percent_Live))  + 
+  geom_bar(stat = "summary", fun = "mean", fill = "skyblue2", alpha = 0.7) +
+  geom_point(size = 3, position = position_jitter(0.2)) + 
+   scale_y_continuous(labels = scales::percent_format()) +
+  labs(x = bquote(H[2]*O[2]~(mM)), y = "% Live") +
+  ggtitle("PI First") +  
+  theme(plot.title = element_text(hjust = 30)) +
+  theme_cowplot(font_size = 16) 
+  
+
+p2 <- gated_data %>% 
+    dplyr::filter(Dye == "SYTO9_first") %>% 
+   dplyr::filter(!(Treatment %in% c("0 mM")))  %>%
+   mutate(Treatment = gsub(" mM", "", Treatment)) %>%
+  ggplot(aes(x = Treatment, y = percent_Live))  + 
+  geom_bar(stat = "summary", fun = "mean", fill = "skyblue2", alpha = 0.7) +
+  geom_point(size = 3, position = position_jitter(0.2)) + 
+   scale_y_continuous(labels = scales::percent_format()) +
+  labs(x = bquote(H[2]*O[2]~(mM)), y = "% Live") +
+  ggtitle("Costaining") +  
+  theme(plot.title = element_text(hjust = 30)) +
+  theme_cowplot(font_size = 16) 
+
+p3 <- gated_data %>% 
+    dplyr::filter(Dye == "SYTO9_first") %>% 
+   dplyr::filter(!(Treatment %in% c("0 mM")))  %>%
+   mutate(Treatment = gsub(" mM", "", Treatment)) %>%
+  ggplot(aes(x = Treatment, y = percent_Live))  + 
+  geom_bar(stat = "summary", fun = "mean", fill = "skyblue2", alpha = 0.7) +
+  geom_point(size = 3, position = position_jitter(0.1)) + 
+   scale_y_continuous(labels = scales::percent_format()) +
+  labs(x = bquote(H[2]*O[2]~(mM)), y = "% Live") +
+  ggtitle("Costaining") +  
+  theme(plot.title = element_text(hjust = 30)) +
+  theme_cowplot(font_size = 16) 
+
+combined_plot <- plot_grid(p1, p2, p3, nrow = 1, ncol = 3, common.legend = TRUE, align = 'hv', widths = c(6, 6, 6))
+
+print(combined_plot)
+ggsave("../output/20240501-Order-Gated.png")
 ```
 
 

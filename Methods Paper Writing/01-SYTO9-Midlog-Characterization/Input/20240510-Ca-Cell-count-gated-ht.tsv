@@ -1,0 +1,17 @@
+Date	Buffer	sample	n_root	n_cells	n_singlet	percent_Cells	plated_Cells	name
+050624	PBS	050624_Cell Count_Experiment_Plate_pbs.fcs	1111	969	537	0.8721872187218722	121.125	050624_Cell Count_Experiment_Plate_pbs.fcs
+050624	Saline	050624_Cell Count_Experiment_Plate_sa.fcs	1326	895	556	0.6749622926093515	111.875	050624_Cell Count_Experiment_Plate_sa.fcs
+050624	SC	050624_Cell Count_Experiment_Plate_sc.fcs	2462	950	351	0.38586515028432167	118.75	050624_Cell Count_Experiment_Plate_sc.fcs
+050624	ddH2O	050624_Cell Count_Experiment_Plate_water.fcs	14285	6089	4211	0.42625131256562826	761.125	050624_Cell Count_Experiment_Plate_water.fcs
+050724	PBS	050724_Cell Count_Experiment_Plate_pbs.fcs	1236	970	565	0.7847896440129449	121.25	050724_Cell Count_Experiment_Plate_pbs.fcs
+050724	Saline	050724_Cell Count_Experiment_Plate_sa.fcs	1026	842	458	0.8206627680311891	105.25	050724_Cell Count_Experiment_Plate_sa.fcs
+050724	SC	050724_Cell Count_Experiment_Plate_sc.fcs	2218	1022	406	0.46077547339945896	127.75	050724_Cell Count_Experiment_Plate_sc.fcs
+050724	ddH2O	050724_Cell Count_Experiment_Plate_water.fcs	1060	851	512	0.8028301886792453	106.375	050724_Cell Count_Experiment_Plate_water.fcs
+050824	PBS	050824_Cell Count_Experiment_Plate_pbs.fcs	1334	1122	636	0.841079460269865	140.25	050824_Cell Count_Experiment_Plate_pbs.fcs
+050824	Saline	050824_Cell Count_Experiment_Plate_sa.fcs	1708	1166	665	0.6826697892271663	145.75	050824_Cell Count_Experiment_Plate_sa.fcs
+050824	SC	050824_Cell Count_Experiment_Plate_sc.fcs	5197	1037	403	0.19953819511256493	129.625	050824_Cell Count_Experiment_Plate_sc.fcs
+050824	ddH2O	050824_Cell Count_Experiment_Plate_water.fcs	994	869	502	0.8742454728370221	108.625	050824_Cell Count_Experiment_Plate_water.fcs
+051024	SC	051024_Count_Experiment_Plate_pbs.fcs	1237	1068	616	0.8633791430881164	133.5	051024_Count_Experiment_Plate_pbs.fcs
+051024	SC	051024_Count_Experiment_Plate_sa.fcs	979	890	518	0.9090909090909091	111.25	051024_Count_Experiment_Plate_sa.fcs
+051024	SC	051024_Count_Experiment_Plate_sc.fcs	4514	935	370	0.2071333628710678	116.875	051024_Count_Experiment_Plate_sc.fcs
+051024	SC	051024_Count_Experiment_Plate_water.fcs	932	858	493	0.9206008583690987	107.25	051024_Count_Experiment_Plate_water.fcs

@@ -42,7 +42,7 @@ sample <- data.frame(tmp) %>%
 rownames(sample) <- oriNames
 pData(dat.f1g) <- sample
 print(pData(dat.f1g))
-write_tsv(pData(dat.f1g), file = "/space/htang5/Documents/FUN1_data_analysis/biol-4386-course-project-htang5/Methods Paper Writing/02-FungaLight-Distinguishing-Power/Input/20240219-PI-Both-Log-Correlation-raw-data-ht.tsv")
+#write_tsv(pData(dat.f1g), file = "/space/htang5/Documents/FUN1_data_analysis/biol-4386-course-project-htang5/Methods Paper Writing/02-FungaLight-Distinguishing-Power/Input/20240219-PI-Both-Log-Correlation-raw-data-ht.tsv")
 ```
 
 
@@ -239,7 +239,77 @@ combined_data %>%
 
 
 ```{r}
+p1 <- combined_data %>% 
+  dplyr::filter(Dye == "PI") %>% 
+   dplyr::filter(!(Treatment %in% c("5C", "0")))  %>%
+  ggplot(aes(x = Treatment, y = percent_Live))  + 
+  geom_bar(stat = "summary", fun = "mean", fill = "skyblue2", alpha = 0.7) +
+  geom_point(size = 2, position = position_jitter(0.05)) + 
+  labs(x = bquote(H[2]*O[2]~(mM)), y = "% Live") +
+  ggtitle("PI only") +  
+  theme(plot.title = element_text(hjust = 30)) +
+  theme_cowplot() 
+  
+
+p2 <- combined_data %>% 
+  dplyr::filter(Dye == "Both") %>% 
+   dplyr::filter(!(Treatment %in% c("5C", "0")))  %>%
+  ggplot(aes(x = Treatment, y = CFU_Survival))  + 
+  geom_bar(stat = "summary", fun = "mean", fill = "skyblue2", alpha = 0.7) +
+  geom_point(size = 2, position = position_jitter(0.05)) + 
+  labs(x = bquote(H[2]*O[2]~(mM)), y = "% Live") +
+  ggtitle("CFU") +  
+  theme(plot.title = element_text(hjust = 15)) +
+  theme_cowplot()
+
+p3 <- combined_data %>% 
+  dplyr::filter(Dye == "Both") %>% 
+   dplyr::filter(!(Treatment %in% c("5C", "0")))  %>%
+  ggplot(aes(x = Treatment, y = percent_Live))  + 
+  geom_bar(stat = "summary", fun = "mean", fill = "skyblue2", alpha = 0.7) +
+  geom_point(size = 2, position = position_jitter(0.05)) + 
+  labs(x = bquote(H[2]*O[2]~(mM)), y = "% Live") +
+  ggtitle("FungaLight") +  
+  theme(plot.title = element_text(hjust = 15)) +
+  theme_cowplot() 
+
+combined_plot <- plot_grid(p1, p2, p3, nrow = 1, ncol = 3, common.legend = TRUE, align = 'hv')
+
+print(combined_plot)
+#ggsave("../output/20240329-Cg-Log-Gated.png")
+```
+
+```{r}
+p2 <- combined_data %>% 
+  dplyr::filter(Dye == "Both" & !(Treatment %in% c("5C", "0")))  %>%
+  ggplot(aes(x = factor(Treatment), y = CFU_Survival)) +
+  geom_point(size = 3, position = position_jitter(0.1)) + 
+  scale_color_brewer(palette = "Dark2") +
+  stat_summary(fun.data = "mean_cl_boot", geom = "pointrange", color = "red2",
+               size = 0.8, position = position_nudge(x = 0.1)) +
+  xlab(bquote(H[2]*O[2]~(mM))) + ylab("CFU survival") +
+  scale_y_continuous(labels = scales::percent_format(scale = 100)) + 
+  theme_cowplot(line_size = 0.7) +
+  theme(strip.text = element_text(size = rel(1), face = 3))+
+  panel_border(color = "black", size = 1.5) +
+  theme(axis.line = element_blank(),
+        strip.background = element_blank(),
+        axis.text.x = element_text(size = 20, face = "bold", color = "black"),  # Adjust size and face (bold)
+        axis.text.y = element_text(size = 20, face = "bold", color = "black"),
+        axis.title.x = element_text(size = 20, face = "bold"),
+        axis.title.y = element_text(size = 20, face = )
+        )+ 
+  theme(strip.text = element_text(size = 20, face = "bold")) 
+
+print(p2)
+ggsave("../output/20240408-Cg-CFU.png")
+```
+
+
+```{r}
 combined_data$new_FGS <- 1*combined_data$percent_Live - 0.6*combined_data$percent_inter - combined_data$percent_Dead
+
+
 pf1g <- combined_data %>%
   pivot_longer(cols = c(CFU_Survival, new_FGS),
                names_to = "Assay",

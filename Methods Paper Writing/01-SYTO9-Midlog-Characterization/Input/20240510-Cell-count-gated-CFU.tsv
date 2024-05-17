@@ -1,0 +1,13 @@
+Date	Buffer	sample	CFU	n_cells	n_root	percent_Cells	plated_Cells	name
+50624	PBS	050624_Cell Count_Experiment_Plate_pbs.fcs	114	969	1111	0.8721872187	121.125	050624_Cell Count_Experiment_Plate_pbs.fcs
+50624	Saline	050624_Cell Count_Experiment_Plate_sa.fcs	123	895	1326	0.6749622926	111.875	050624_Cell Count_Experiment_Plate_sa.fcs
+50624	SC	050624_Cell Count_Experiment_Plate_sc.fcs	146	950	2462	0.3858651503	118.75	050624_Cell Count_Experiment_Plate_sc.fcs
+50724	SC	050724_Cell Count_Experiment_Plate_sc.fcs	148	1022	2218	0.4607754734	127.75	050724_Cell Count_Experiment_Plate_sc.fcs
+50724	ddH2O	050724_Cell Count_Experiment_Plate_water.fcs	146	851	1060	0.8028301887	106.375	050724_Cell Count_Experiment_Plate_water.fcs
+50824	PBS	050824_Cell Count_Experiment_Plate_pbs.fcs	159	1122	1334	0.8410794603	140.25	050824_Cell Count_Experiment_Plate_pbs.fcs
+50824	Saline	050824_Cell Count_Experiment_Plate_sa.fcs	115	1166	1708	0.6826697892	145.75	050824_Cell Count_Experiment_Plate_sa.fcs
+50824	SC	050824_Cell Count_Experiment_Plate_sc.fcs	105	1037	5197	0.1995381951	129.625	050824_Cell Count_Experiment_Plate_sc.fcs
+50824	ddH2O	050824_Cell Count_Experiment_Plate_water.fcs	132	869	994	0.8742454728	108.625	050824_Cell Count_Experiment_Plate_water.fcs
+51024	PBS	051024_Count_Experiment_Plate_pbs.fcs	161	1068	1237	0.8633791431	133.5	051024_Count_Experiment_Plate_pbs.fcs
+51024	Saline	051024_Count_Experiment_Plate_sa.fcs	104	890	979	0.9090909091	111.25	051024_Count_Experiment_Plate_sa.fcs
+51024	ddH2O	051024_Count_Experiment_Plate_water.fcs	170	858	932	0.9206008584	107.25	051024_Count_Experiment_Plate_water.fcs

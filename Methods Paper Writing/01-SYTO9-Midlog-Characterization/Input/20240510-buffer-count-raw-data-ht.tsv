@@ -1,0 +1,17 @@
+Date	Buffer	name
+050624	PBS	050624_Cell Count_Experiment_Plate_pbs.fcs
+050624	Saline	050624_Cell Count_Experiment_Plate_sa.fcs
+050624	SC	050624_Cell Count_Experiment_Plate_sc.fcs
+050624	ddH2O	050624_Cell Count_Experiment_Plate_water.fcs
+050724	PBS	050724_Cell Count_Experiment_Plate_pbs.fcs
+050724	Saline	050724_Cell Count_Experiment_Plate_sa.fcs
+050724	SC	050724_Cell Count_Experiment_Plate_sc.fcs
+050724	ddH2O	050724_Cell Count_Experiment_Plate_water.fcs
+050824	PBS	050824_Cell Count_Experiment_Plate_pbs.fcs
+050824	Saline	050824_Cell Count_Experiment_Plate_sa.fcs
+050824	SC	050824_Cell Count_Experiment_Plate_sc.fcs
+050824	ddH2O	050824_Cell Count_Experiment_Plate_water.fcs
+051024	SC	051024_Count_Experiment_Plate_pbs.fcs
+051024	SC	051024_Count_Experiment_Plate_sa.fcs
+051024	SC	051024_Count_Experiment_Plate_sc.fcs
+051024	SC	051024_Count_Experiment_Plate_water.fcs

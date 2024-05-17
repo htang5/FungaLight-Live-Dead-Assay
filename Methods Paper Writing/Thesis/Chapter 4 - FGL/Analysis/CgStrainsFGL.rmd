@@ -1,0 +1,185 @@
+---
+title: "Cg Strains FGL Apply"
+output: html_document
+date: "2023-12-18"
+---
+
+# Background
+This is the flow cytometry data for miglog phase Cg stained with various concentrations of SYTO9 alone, and run through flow cytometry (details in ELN). The goal is to establish SYTO9's staining pattern in midlog phase yeasts cells.
+
+```{r setup, message=FALSE}
+require(tidyverse)
+require(flowCore)
+require(flowClust)
+require(openCyto)
+require(ggcyto)
+require(cowplot)
+require(ggrdiges)
+```
+
+# Import data
+> FCS files are stored in RDSS/user/flow cytometry, FCS is read and write into an input tsv table. The tsv file is avaliable from the Input folder.
+
+```{r}
+# use relative path to make it easier for collaboration
+data.path = "/space/htang5/Documents/20240228"
+dat.f1 <- read.flowSet(path = data.path, transformation = FALSE,  # the original values are already linearized. 
+                   emptyValue = FALSE,  alter.names = TRUE,   # change parameter names to R format
+                   column.pattern = ".H|FSC|SSC") # only load the height variables for the fluorescent parameters
+```
+
+Simplify the sample names
+
+```{r}
+require(PTXQC)
+oriNames <- sampleNames(dat.f1)
+tmp <- str_split(oriNames, pattern = "[ _]+", simplify = TRUE)[,c(1, 6, 7, 8)] 
+colnames(tmp) <- c("Date", "Strains", "Primary", "Secondary") 
+sample <- data.frame(tmp) %>% 
+  mutate(Secondary = gsub(".fcs", "", Secondary),
+         Secondary = factor(Secondary, levels = c("0", "15", "20", "60", "100"))) %>% 
+  mutate(Secondary = paste(Secondary, "mM", sep = "")) %>%
+  mutate(Strains = factor(Strains, levels = c(97, 103, 250, 181)))
+rownames(sample) <- oriNames
+pData(dat.f1) <- sample
+print(pData(dat.f1))
+#write_tsv(pData(dat.f1), file = "../Input/20231228-fig-1-raw-data-ht.tsv")
+```
+
+# Gatting for Singlets
+>The following gaphing steps are used to gate singlets by FSC and SSC values. Only singlets are included in analysis.
+
+>Gate for outlier 
+
+```{r}
+outlier.gate <- rectangleGate(filterId = "-outlier", "FSC.H" = c(1.2e5, 1e6), "SSC.H" = c(1e2, 1e6))
+ggcyto(dat.f1 [1], aes(x = FSC.H, y = SSC.H), subset = "root") +
+  geom_hex(bins = 64) + geom_gate(outlier.gate) + facet_wrap(~name, ncol = 2) + ggcyto_par_set(limits = "instrument")
+```
+Add gate to GS
+```{r}
+gs <- GatingSet(dat.f1) # create a GatingSet
+gs_pop_add(gs, outlier.gate, parent = "root")
+recompute(gs)
+```
+
+>Gate for singlets
+
+```{r fig.width=4, fig.height=4}
+scPars <- ggcyto_par_set(limits = list(x = c(0,1e6), y = c(30,300)))
+ex <- Subset(dat.f1[[1]], outlier.gate)
+polygon <- matrix(c(1e5, 1e5, 1e6, 1e6, 
+                    60, 105, 135,60), ncol = 2)
+colnames(polygon) <- c("FSC.H", "FSC.W")
+singlet.gate <- polygonGate(filterId = "singlet", boundaries = polygon)
+ggcyto(ex, aes(x = FSC.H, y = FSC.W)) + geom_hex(bins = 128) + geom_gate(singlet.gate) + geom_stats() + scPars
+```
+
+
+Add this gate to the gatingSet
+```{r}
+gs_pop_add(gs, singlet.gate, parent = "-outlier", name = "singlet")
+recompute(gs)
+```
+
+# Gate for Dead population
+> Dead population is defined based on 1M treated sample.
+
+```{r fig.width=4, fig.height=4}
+scPars <- ggcyto_par_set(limits = list(x = c(0,1e6), y = c(0,1e6)))
+ex <- Subset(dat.f1[[8]], singlet.gate)
+polygon <- matrix(c(10^3.3, 10^5, 10^5, 10^3.3, 
+                    0, 0, 10^5, 10^5), ncol = 2)
+colnames(polygon) <- c("BL1.H", "BL3.H")
+dead.gate <- polygonGate(filterId = "dead", boundaries = polygon)
+ggcyto(ex, aes(x = BL1.H, y = BL3.H)) + geom_hex(bins = 128) + geom_gate(dead.gate) + geom_stats() + scPars + scale_x_logicle() + scale_y_logicle() 
+```
+Add this gate to the gatingSet
+
+```{r eval=FALSE, include=FALSE}
+gs_pop_add(gs, dead.gate, parent = "singlet", name = "dead")
+recompute(gs)
+```
+
+
+```{r}
+print(pData(dat.f1))
+```
+
+# Output Graph Production
+>Several output graphs are produced, and are stored in the Output folder.
+
+```{r}
+sub <- dat.f1[pData(dat.f1)$Strains == "181"] 
+sg <- Subset(sub, singlet.gate)
+p2 <- sg %>% 
+  ggcyto(aes(x = "BL1.H", y = "BL3.H")) + 
+  geom_hex(bins = 80, aes(fill = ..ncount..)) + geom_gate(dead.gate) + geom_stats() +
+  facet_grid(Primary ~ Secondary, 
+             labeller = as_labeller(c("0mM" = "0 mM", "60mM" = "60 mM",
+                                      "m" = "mock", "p" = "-Pi"))) + 
+  theme_minimal()
+p2 + scale_x_logicle() + scale_y_logicle() +
+  xlab("FungaLight Green Fluorescence") + ylab("FungaLight Red Fluorescence") +
+  panel_border(color = "black", size = 1) +
+  theme(axis.line = element_blank(),
+        strip.background = element_blank(),
+        axis.text.x = element_text(size = 20, color = "black"),  # Adjust size and face (bold)
+        axis.text.y = element_text(size = 20, color = "black"),
+        axis.title.x = element_text(size = 20, face = "bold"),
+        axis.title.y = element_text(size = 20, face = "bold")
+        ) + 
+  theme(strip.text = element_text(size = 20, face = "bold")) 
+ggsave("../output/20240330-yH181-ASR-Flow-Plot.png", width = 7, height = 5)
+```
+
+
+```{r}
+sub <- dat.f1[pData(dat.f1)$Strains == "250"] 
+sg <- Subset(sub, singlet.gate)
+p2 <- sg %>% 
+  ggcyto(aes(x = "BL1.H", y = "BL3.H")) + 
+  geom_hex(bins = 80, aes(fill = ..ncount..)) + geom_gate(dead.gate) + geom_stats() +
+  facet_grid(Primary ~ Secondary, 
+             labeller = as_labeller(c("0mM" = "0 mM", "20mM" = "20 mM",
+                                      "m" = "mock", "p" = "-Pi"))) + 
+  theme_minimal()
+p2 + scale_x_logicle() + scale_y_logicle() +
+  xlab("FungaLight Green Fluorescence") + ylab("FungaLight Red Fluorescence") +
+  panel_border(color = "black", size = 1) +
+  theme(axis.line = element_blank(),
+        strip.background = element_blank(),
+        axis.text.x = element_text(size = 20, color = "black"),  # Adjust size and face (bold)
+        axis.text.y = element_text(size = 20, color = "black"),
+        axis.title.x = element_text(size = 20, face = "bold"),
+        axis.title.y = element_text(size = 20, face = "bold")
+        ) + 
+  theme(strip.text = element_text(size = 20, face = "bold")) 
+ggsave("../output/20240330-yH250-ASR-Flow-Plot.png", width = 7, height = 5)
+```
+
+```{r}
+sub <- dat.f1[pData(dat.f1)$Strains == "97"] 
+sg <- Subset(sub, singlet.gate)
+p2 <- sg %>% 
+  ggcyto(aes(x = "BL1.H", y = "BL3.H")) + 
+  geom_hex(bins = 80, aes(fill = ..ncount..)) + geom_gate(dead.gate) + geom_stats() +
+  facet_grid(Primary ~ Secondary, 
+             labeller = as_labeller(c("0mM" = "0 mM", "100mM" = "100 mM",
+                                      "m" = "mock", "p" = "-Pi"))) + 
+  theme_minimal()
+p2 + scale_x_logicle() + scale_y_logicle() +
+  xlab("FungaLight Green Fluorescence") + ylab("FungaLight Red Fluorescence") +
+  panel_border(color = "black", size = 1) +
+  theme(axis.line = element_blank(),
+        strip.background = element_blank(),
+        axis.text.x = element_text(size = 20, color = "black"),  # Adjust size and face (bold)
+        axis.text.y = element_text(size = 20, color = "black"),
+        axis.title.x = element_text(size = 20, face = "bold"),
+        axis.title.y = element_text(size = 20, face = "bold")
+        ) + 
+  theme(strip.text = element_text(size = 20, face = "bold")) 
+ggsave("../output/20240330-yH97-ASR-Flow-Plot.png", width = 7, height = 5)
+```
+
+
