@@ -167,8 +167,8 @@ p2 <- sg %>%
   ggcyto(aes(x = "BL1.H", y = "BL3.H")) + 
   geom_hex(bins = 80, aes(fill = ..ncount..))  +
   theme_minimal()
-p2 + scale_x_flowjo_biexp(limits = c(1, 1e5), breaks = c(100, 1000, 10000, 100000)) + 
-  scale_y_flowjo_biexp(limits = c(1, 1e5), breaks = c(100, 1000, 10000, 100000)) +
+p2  + scale_x_logicle (breaks = c(100, 1000, 10000, 100000, 1000000)) + scale_y_logicle (breaks = c(100, 1000, 10000, 100000, 1000000)) +
+  coord_cartesian(xlim = c(1, 1e5), ylim = c(1, 1e5)) +
   xlab("Green Fluorescence") + ylab("Red Fluorescence")  +
   panel_border(color = "black", size = 2) +
   theme(axis.line = element_blank(),

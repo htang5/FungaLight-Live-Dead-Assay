@@ -191,28 +191,26 @@ print(combined_data)
 # Output Graph Production
 >Several output graphs are produced, and are stored in the Output folder.
 
-```{r}
+```{r fig.width=8, fig.height=8}
 sub <- dat.f1g[pData(dat.f1g)$Dye == "Both" & pData(dat.f1g)$Date == "032324"] 
 sg <- Subset(sub, singlet.gate)
 p2 <- sg %>% 
   ggcyto(aes(x = "BL1.H", y = "BL3.H")) + 
   geom_hex(bins = 80, aes(fill = ..ncount..)) + 
-  facet_grid(Dye ~ Treatment, 
-             labeller = as_labeller(c("0" = "0 mM", "0.6" = "0.6 mM", "6" = "6 mM", "1000" = "1000 mM",
-                                       "PI" = "PI only", "SYTO9_first" = "SYTO9+PI Costain", "PI_first" = "PI first"))) + 
+  facet_wrap(~ Treatment, nrow = 2, labeller = as_labeller(c("0" = "0 mM", "0.6" = "0.6 mM", "6" = "6 mM", "1000" = "1000 mM"))) + 
   theme_minimal()
-p2 + scale_x_logicle() + scale_y_logicle() +
-  xlab("FungaLight Green Fluorescence") + ylab("FungaLight Red Fluorescence") +
-  panel_border(color = "black", size = 1) +
+p2 + scale_x_logicle(breaks = c(100, 1000, 10000, 100000)) + scale_y_logicle(breaks = c(100, 1000, 10000, 10000, 100000)) +
+  xlab("FungaLight Green Fluorescence") + ylab("FungaLight Red Fluorescence")  +
+  panel_border(color = "black", size = 2) +
   theme(axis.line = element_blank(),
         strip.background = element_blank(),
-        axis.text.x = element_text(size = 10, color = "black"),  # Adjust size and face (bold)
-        axis.text.y = element_text(size = 10, color = "black"),
-        axis.title.x = element_text(size = 16, face = "bold"),
-        axis.title.y = element_text(size = 16, face = "bold")
-        ) + 
-  theme(strip.text = element_text(size = 9, face = "bold")) 
-#ggsave("../output/20240117-dye-Order-Flow-Plot.png", width = 7, height = 5)
+        axis.text.x = element_text(size = 25, face = "bold", color = "black"),  # Adjust size and face (bold)
+        axis.text.y = element_text(size = 25, face = "bold", color = "black"),
+        axis.title.x = element_text(size = 25, face = "bold"),
+        axis.title.y = element_text(size = 25, face = "bold")
+        )+ 
+  theme(strip.text = element_text(size = 25, face = "bold")) 
+ggsave("../output/20240430-Ca-log-Flow-Plot.png")
 ```
 ```{r}
 combined_data <- read_tsv("/space/htang5/Documents/FUN1_data_analysis/biol-4386-course-project-htang5/Methods Paper Writing/02-FungaLight-Distinguishing-Power/Input/20240325-Ca-PI-Both-Distinguishing-Power-gated-CFU.tsv") %>% 

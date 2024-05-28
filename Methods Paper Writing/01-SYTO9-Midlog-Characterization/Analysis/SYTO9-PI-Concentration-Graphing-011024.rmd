@@ -187,6 +187,57 @@ p2 + scale_x_logicle(breaks = c(100, 1000, 10000)) + scale_y_logicle(breaks = c(
   theme(strip.text = element_text(size = 20, face = "bold")) 
 #ggsave("/space/htang5/Documents/FUN1_data_analysis/biol-4386-course-project-htang5/Methods Paper Writing/01-SYTO9-Midlog-Characterization/output/20240425-PI-Dilutions-Raw-Flow-Plot.png")
 ```
+```{r fig.width=16, fig.height=4}
+sub <- dat.f1[pData(dat.f1)$Dye == "PI" & pData(dat.f1)$Date == "112023" & pData(dat.f1)$Dilution == "1000 x"] 
+sg <- Subset(sub, singlet.gate)
+scPars <- ggcyto_par_set(limits = list(x = c(0,1e6), y = c(0,1e6)))
+p2 <- sg %>% 
+  ggcyto(aes(x = "BL1.H", y = "BL3.H")) + 
+  geom_hex(bins = 80, aes(fill = ..ncount..)) + geom_gate(dead.gate, size = 1) + geom_stats(adjust = c(20, 0.1), size = 10) +
+  facet_grid(Dilution ~ Treatment, 
+             labeller = as_labeller(c("0 mM" = "0 mM", "10 mM" = "10 mM", "100 mM" = "100 mM", "1000 mM" = "1000 mM", 
+                                      "250 x" = "250x", "500 x" = "500x", "1000 x" = "1000x", "2000 x" = "2000x"))) + 
+  theme_minimal()
+p2 + scale_x_logicle (breaks = c(100, 1000, 10000, 100000, 1000000)) + scale_y_logicle (breaks = c(100, 1000, 10000, 100000, 1000000)) +
+  coord_cartesian(xlim = c(1, 1e6), ylim = c(1, 1e6)) +
+  xlab("FungaLight Green Fluorescence") + ylab("FungaLight Red Fluorescence")  +
+  panel_border(color = "black", size = 2) +
+  theme(axis.line = element_blank(),
+        strip.background = element_blank(),
+        axis.text.x = element_text(size = 25, face = "bold", color = "black"),  # Adjust size and face (bold)
+        axis.text.y = element_text(size = 25, face = "bold", color = "black"),
+        axis.title.x = element_text(size = 25, face = "bold"),
+        axis.title.y = element_text(size = 20, face = "bold")
+        )+ 
+  theme(strip.text = element_text(size = 20, face = "bold")) 
+ggsave("/space/htang5/Documents/FUN1_data_analysis/biol-4386-course-project-htang5/Methods Paper Writing/01-SYTO9-Midlog-Characterization/output/20240521-PI-1000x-Raw-Flow-Plot.png")
+```
+
+```{r fig.width=16, fig.height=4}
+sub <- dat.f1[pData(dat.f1)$Dye == "SYTO9" & pData(dat.f1)$Date == "112023" & pData(dat.f1)$Dilution == "1000 x"] 
+sg <- Subset(sub, singlet.gate)
+scPars <- ggcyto_par_set(limits = list(x = c(0,1e6), y = c(0,1e6)))
+p2 <- sg %>% 
+  ggcyto(aes(x = "BL1.H", y = "BL3.H")) + 
+  geom_hex(bins = 80, aes(fill = ..ncount..)) + geom_gate(RP.gate, size = 1) + geom_stats(adjust = c(0.05, 0.1), size = 10) +
+  facet_grid(Dilution ~ Treatment, 
+             labeller = as_labeller(c("0 mM" = "0 mM", "10 mM" = "10 mM", "100 mM" = "100 mM", "1000 mM" = "1000 mM", 
+                                      "250 x" = "250x", "500 x" = "500x", "1000 x" = "1000x", "2000 x" = "2000x"))) + 
+  theme_minimal()
+p2 + scale_x_logicle (breaks = c(100, 1000, 10000, 100000, 1000000)) + scale_y_logicle (breaks = c(100, 1000, 10000, 100000, 1000000)) +
+  coord_cartesian(xlim = c(1, 1e6), ylim = c(1, 1e6)) +
+  xlab("FungaLight Green Fluorescence") + ylab("FungaLight Red Fluorescence")  +
+  panel_border(color = "black", size = 2) +
+  theme(axis.line = element_blank(),
+        strip.background = element_blank(),
+        axis.text.x = element_text(size = 25, face = "bold", color = "black"),  # Adjust size and face (bold)
+        axis.text.y = element_text(size = 25, face = "bold", color = "black"),
+        axis.title.x = element_text(size = 25, face = "bold"),
+        axis.title.y = element_text(size = 20, face = "bold")
+        )+ 
+  theme(strip.text = element_text(size = 20, face = "bold")) 
+ggsave("/space/htang5/Documents/FUN1_data_analysis/biol-4386-course-project-htang5/Methods Paper Writing/01-SYTO9-Midlog-Characterization/output/20240521-SYTO9-1000x-Raw-Flow-Plot.png")
+```
 
 > PI quantifications
 
@@ -290,14 +341,14 @@ ggsave("/space/htang5/Documents/FUN1_data_analysis/biol-4386-course-project-htan
 pf1a <- combined_data_f1 %>%
   dplyr::filter(Dye == "SYTO9") %>% 
   dplyr::filter(Dilution == "1000 x") %>%
-  mutate(Dilution = gsub("(\\d+) x", "\\1x", Dilution)) %>% 
+  mutate(Treatment = gsub("1000 mM", "1 M", Treatment)) %>%
+  mutate(Treatment = factor(Treatment, levels = c("0 mM", "10 mM", "100 mM", "1 M"))) %>%
   ggplot(aes(x = Treatment, y = BL1.H)) +
   geom_point(stroke = 1, size = 2, position = position_jitter(0.2)) +
   stat_summary(fun.data = "mean_cl_boot", geom = "pointrange", color = "red2",
                size = 0.8, position = position_nudge(x = 0.1)) +
   theme_minimal()
-pf1a +
-  labs(x = "[Hydrogen Peroxide]", y = "Green MFI") +
+pf1a + labs(x = bquote(H[2]*O[2]), y = "Green MFI") +
   panel_border(color = "black", size = 1.5) +
   theme(axis.line = element_blank(),
         strip.background = element_blank(),
@@ -306,7 +357,7 @@ pf1a +
         axis.title.x = element_text(size = 25, face = "bold"),
         axis.title.y = element_text(size = 25, face = "bold")
         )
-ggsave("../output/20240426-SYTO9-Dilutions-Green-MFI-Plot.png", width = 7, height = 5)
+ggsave("../output/20240522-SYTO9-Dilutions-Green-MFI-Plot.png", width = 7, height = 5)
 ```
 
 > Graph red MFI for various SYTO9 dilutions
@@ -316,14 +367,15 @@ ggsave("../output/20240426-SYTO9-Dilutions-Green-MFI-Plot.png", width = 7, heigh
 pf1a <- combined_data_f1 %>%
   dplyr::filter(Dye == "SYTO9") %>% 
   dplyr::filter(Dilution == "1000 x") %>%
-  mutate(Dilution = gsub("(\\d+) x", "\\1x", Dilution)) %>% 
+  mutate(Treatment = gsub("1000 mM", "1 M", Treatment)) %>%
+  mutate(Treatment = factor(Treatment, levels = c("0 mM", "10 mM", "100 mM", "1 M"))) %>%
   ggplot(aes(x = Treatment, y = BL3.H)) +
   geom_point(stroke = 1, size = 2, position = position_jitter(0.2)) +
   stat_summary(fun.data = "mean_cl_boot", geom = "pointrange", color = "red2",
                size = 0.8, position = position_nudge(x = 0.1)) +
   theme_minimal()
 pf1a +
- labs(x = "[Hydrogen Peroxide]", y = "Red MFI") +
+ labs(x = bquote(H[2]*O[2]), y = "Red MFI") +
   panel_border(color = "black", size = 1.5) +
   theme(axis.line = element_blank(),
         strip.background = element_blank(),
@@ -332,7 +384,7 @@ pf1a +
         axis.title.x = element_text(size = 25, face = "bold"),
         axis.title.y = element_text(size = 25, face = "bold")
         )
-ggsave("../output/20240426-SYTO9-Dilutions-Red-MFI-Plot.png", width = 7, height = 5)
+ggsave("../output/20240522-SYTO9-Dilutions-Red-MFI-Plot.png", width = 7, height = 5)
 ```
 
 > Graph a scatter plot for median red and greens for each population

@@ -267,55 +267,36 @@ p2 + scale_x_logicle(breaks = c(100, 1000, 10000)) + scale_y_logicle(breaks = c(
 ggsave("../output/20240424-Pre-unstained-peak-Plot.png")
 ```
 
-```{r}
-sub <- dat.f1e[pData(dat.f1e)$Dye == "SYTO9" & pData(dat.f1e)$Date == "010824"] 
-sg <- Subset(sub, singlet.gate)
-p2 <- sg %>% 
-  ggcyto(aes(x = "BL1.H", y = "BL3.H")) + 
-  geom_hex(bins = 80, aes(fill = ..ncount..)) + 
-  facet_grid(Buffer ~ Treatment, 
-             labeller = as_labeller(c("0 mM" = "0 mM", "10 mM" = "10 mM", "100 mM" = "100 mM", "1000 mM" = "1000 mM",
-                                      "Saline" = "0.85% Saline", "PBS" = "PBS", "ddH2O" = "DI Water", "sc complete" = "sc Media")))  + 
-  theme_minimal()
-p2 + scale_x_logicle() + scale_y_logicle() +
-  xlab("FungaLight Green Fluorescence") + ylab("FungaLight Red Fluorescence") +
-  panel_border(color = "black", size = 1) +
-  theme(axis.line = element_blank(),
-        strip.background = element_blank(),
-        axis.text.x = element_text(size = 10, color = "black"),  # Adjust size and face (bold)
-        axis.text.y = element_text(size = 10, color = "black"),
-        axis.title.x = element_text(size = 16, face = "bold"),
-        axis.title.y = element_text(size = 16, face = "bold")
-        ) + 
-  theme(strip.text = element_text(size = 9, face = "bold")) 
-ggsave("../output/20240111-SYTO9-Buffers-Flow-Plot.png", width = 7, height = 5)
+
+```{r fig.width=6, fig.height=6}
+p1 <- gated_data %>% 
+  dplyr::filter(Treatment == "0 mM") %>% 
+  ggplot(aes(x = Date, y = percent_Dead))  + 
+  geom_bar(stat = "summary", fun = "mean", fill = "skyblue2", alpha = 0.7) +
+   scale_y_continuous(labels = scales::percent_format()) +
+  labs(x = "Replicates", y = "% Dead Population") +
+  ggtitle("Dead") +  
+  theme(plot.title = element_text(hjust = 30)) +
+  theme_cowplot(font_size = 25) 
+p1
+ggsave("../output/20240523-dead-in-mock.png")
 ```
-```{r}
-sub <- dat.f1e[pData(dat.f1e)$Dye == "Both" & 
-                pData(dat.f1e)$Date == "010824" & 
-                (pData(dat.f1e)$Treatment == "0 mM" |
-                 pData(dat.f1e)$Treatment == "100 mM" |
-                 pData(dat.f1e)$Treatment == "1000 mM")]
-sg <- Subset(sub, singlet.gate)
-p2 <- sg %>% 
-  ggcyto(aes(x = "BL1.H", y = "BL3.H")) + 
-  geom_hex(bins = 80, aes(fill = ..ncount..)) + 
-  facet_grid(Buffer ~ Treatment, 
-             labeller = as_labeller(c("0 mM" = "Live", "100 mM" = "Damaged", "1000 mM" = "Dead",
-                                      "Saline" = "Saline", "PBS" = "PBS", "ddH2O" = "ddH2O", "sc complete" = "Media")))  + 
-  theme_minimal()
-p2 + scale_x_logicle() + scale_y_logicle() +
-  xlab("FungaLight Green Fluorescence") + ylab("FungaLight Red Fluorescence") +
-  panel_border(color = "black", size = 1) +
-  theme(axis.line = element_blank(),
-        strip.background = element_blank(),
-        axis.text.x = element_text(size = 10, color = "black"),  # Adjust size and face (bold)
-        axis.text.y = element_text(size = 10, color = "black"),
-        axis.title.x = element_text(size = 16, face = "bold"),
-        axis.title.y = element_text(size = 16, face = "bold")
-        ) + 
-  theme(strip.text = element_text(size = 18, face = "bold")) 
-#ggsave("../output/20240111-Both-Buffers-Flow-Plot.png", width = 7, height = 5)
+
+```{r fig.width=6, fig.height=6}
+p2 <- gated_data %>% 
+   dplyr::filter(Treatment %in% c("0 mM", "10 mM", "100 mM"))  %>%
+  mutate(Treatment = gsub(" mM", "", Treatment)) %>%
+  ggplot(aes(x = Treatment, y = percent_Unstained))  + 
+  geom_bar(stat = "summary", fun = "mean", fill = "skyblue2", alpha = 0.7) +
+  geom_point(size = 3, position = position_jitter(0.2)) + 
+   scale_y_continuous(labels = scales::percent_format()) +
+  labs(x = bquote(H[2]*O[2]~(mM)), y = "% Unstained") +
+  ggtitle("SYTO9 only") +  
+  theme(plot.title = element_text(hjust = 30)) +
+  theme_cowplot(font_size = 25) 
+  
+p2
+ggsave("../output/20240523-unstained.png")
 ```
 
 
